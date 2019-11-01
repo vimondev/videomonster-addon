@@ -90,6 +90,7 @@ async function func() {
             Template_path,
             Material_Json,
             ReplaceSourcePath,
+            gettyImagesPath,
             TemplateId
         } = data
 
@@ -98,7 +99,7 @@ async function func() {
             await global.InstallFont(fontPath)
 
             // Path 설정 후 렌더링
-            image.SetPath(Template_path, Material_Json, ReplaceSourcePath, TemplateId)
+            image.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId)
             const ae_log = await image.Rendering(imagePath)
 
             socket.emit(`image_render_completed`, {

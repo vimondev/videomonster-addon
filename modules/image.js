@@ -7,11 +7,12 @@ const {
 } = config
 
 const Save_path = `C:/result`
-const ScriptRoot_path = `C:/videomonster-imagerenderer/scripts`
+const ScriptRoot_path = `C:/videomonster-addon/scripts`
 
 let Template_path
 let Material_Json
 let ReplaceSourcePath
+let GettyImagesPath
 let TemplateId
 
 function AccessAsync(path) {
@@ -68,10 +69,11 @@ function RmDirAsync(path) {
 }
 
 // Rendering을 수행할 Path 설정
-exports.SetPath = (_Template_path, _Material_Json, _ReplaceSourcePath, _TemplateId) => {
+exports.SetPath = (_Template_path, _Material_Json, _ReplaceSourcePath, _GettyImagesPath, _TemplateId) => {
     Template_path = _Template_path
     Material_Json = _Material_Json
     ReplaceSourcePath = _ReplaceSourcePath
+    GettyImagesPath = _GettyImagesPath
     TemplateId = _TemplateId
 }
 
@@ -100,6 +102,7 @@ exports.Rendering = (imagePath) => {
             script = script.replace('${Json2Path}', `${ScriptRoot_path}/json2.js`);
             script = script.replace('${Material}', Material_Json);
             script = script.replace('${ReplaceSourcePath}', ReplaceSourcePath);
+            script = script.replace('${gettyImagesPath}', GettyImagesPath)
             script = script.replace('${ResultPath}', localPath)
             
             // 이미지 렌더링 시작
@@ -148,11 +151,13 @@ exports.Rendering = (imagePath) => {
                     resolve(ae_log)
                 }
                 catch (e) {
+                    console.log(e)
                     reject(e)
                 }
             })
         }
         catch (e) {
+            console.log(e)
             reject(e)
         }
     })
