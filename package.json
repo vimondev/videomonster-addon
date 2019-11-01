@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "guid": "0.0.12",
+    "io-info": "^1.0.7",
+    "socket.io-client": "^2.2.0"
+  }
+}
