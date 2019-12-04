@@ -188,7 +188,6 @@ exports.MaterialParse = () => {
             script = script.replace('${Material}', Material_Json);
             script = script.replace('${ReplaceSourcePath}', ReplaceSourcePath);
             script = script.replace('${gettyImagesPath}', GettyImagesPath)
-            script = script.replace('${ResultPath}', localPath)
             
             // 이미지 렌더링 시작
             const child = execFile(`${aerenderPath}/AfterFX.com`, ['-s', script, '-noui'])
