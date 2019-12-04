@@ -2,18 +2,22 @@ const fs = require(`fs`)
 const io = require(`io-info`)
 const { execFile } = require(`child_process`)
 const config = require(`../config`)
+const path = require('path')
 const {
     aerenderPath
 } = config
 
 const Save_path = `C:/result`
-const ScriptRoot_path = `C:/videomonster-addon/scripts`
+const ScriptRoot_path = __dirname.replace('modules', 'Scripts').replace(/\\/gi, '/')
 
 let Template_path
 let Material_Json
 let ReplaceSourcePath
 let GettyImagesPath
 let TemplateId
+
+let isScriptRunning = false
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 function AccessAsync(path) {
     return new Promise((resolve, reject) => {
@@ -78,9 +82,12 @@ exports.SetPath = (_Template_path, _Material_Json, _ReplaceSourcePath, _GettyIma
 }
 
 // 이미지 렌더링
-exports.Rendering = (imagePath) => {
+exports.CreatePreviewImage = (imagePath) => {
     return new Promise(async (resolve, reject) => {
         try {
+            while (isScriptRunning) await sleep(1000)
+            isScriptRunning = true
+
             let ae_log = ``
 
             // 기존 파일 제거
@@ -119,6 +126,7 @@ exports.Rendering = (imagePath) => {
             })
 
             child.on('close', async code => {
+                isScriptRunning = false
                 try {
                     // 위에 로직과 중복
                     if (await AccessAsync(imagePath)) {
@@ -157,6 +165,51 @@ exports.Rendering = (imagePath) => {
             })
         }
         catch (e) {
+            isScriptRunning = false
+            console.log(e)
+            reject(e)
+        }
+    })
+}
+
+// AEP 파일 생성
+exports.MaterialParse = () => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            while (isScriptRunning) await sleep(1000)
+            isScriptRunning = true
+
+            let ae_log = ``
+
+            // 스크립트 로드 & Replace
+            let script = io.FileInfo.readAllText(`${ScriptRoot_path}/materialParse.js`)
+            script = script.replace('${ProjectPath}', Template_path);
+            script = script.replace('${Json2Path}', `${ScriptRoot_path}/json2.js`);
+            script = script.replace('${Material}', Material_Json);
+            script = script.replace('${ReplaceSourcePath}', ReplaceSourcePath);
+            script = script.replace('${gettyImagesPath}', GettyImagesPath)
+            script = script.replace('${ResultPath}', localPath)
+            
+            // 이미지 렌더링 시작
+            const child = execFile(`${aerenderPath}/AfterFX.com`, ['-s', script, '-noui'])
+
+            child.stdout.on('data', data => {
+                ae_log += data
+                console.log(String(data))
+            })
+            
+            child.stderr.on('data', data => {
+                ae_log += data
+                console.log(String(data))
+            })
+
+            child.on('close', async code => {
+                isScriptRunning = false
+                resolve(ae_log)
+            })
+        }
+        catch (e) {
+            isScriptRunning = false
             console.log(e)
             reject(e)
         }

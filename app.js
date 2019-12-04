@@ -30,10 +30,11 @@ async function func() {
 
     const config = require(`./config`)
     const global = require(`./global`)
-    const image = require(`./modules/image`)
+    const scriptExecutor = require(`./modules/scriptExecutor`)
     
     // 이미지 렌더링 수행중?
     let isImageRendering = false
+    let isMaterialParsing = false
 
     // 시작 전에 VM DEVICE에 생성된 TOKEN_ID 파일이 있는지 검사한다. 있으면 그대로 사용한다.
     let token = ``
@@ -80,6 +81,15 @@ async function func() {
         }
     })
 
+    socket.on(`is_stopped_material_parsing`, () => {
+        if (isMaterialParsing == false) {
+            socket.emit(`material_parse_completed`, {
+                ae_log: null,
+                errCode: `ERR_MATERIAL_PARSE_STOPPED`
+            })
+        }
+    })
+
     // 이미지 렌더링 시작
     socket.on(`image_render_start`, async data => {
         isImageRendering = true
@@ -99,8 +109,8 @@ async function func() {
             await global.InstallFont(fontPath)
 
             // Path 설정 후 렌더링
-            image.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId)
-            const ae_log = await image.Rendering(imagePath)
+            scriptExecutor.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId)
+            const ae_log = await scriptExecutor.CreatePreviewImage(imagePath)
 
             socket.emit(`image_render_completed`, {
                 ae_log,
@@ -114,6 +124,40 @@ async function func() {
             })
         }
         isImageRendering = false
+    })
+
+    socket.on(`material_parse_start`, async data => {
+        isMaterialParsing = true
+        const {
+            fontPath,
+
+            Template_path,
+            Material_Json,
+            ReplaceSourcePath,
+            gettyImagesPath,
+            TemplateId
+        } = data
+
+        try {
+            // 폰트 설치
+            await global.InstallFont(fontPath)
+
+            // Path 설정 후 렌더링
+            scriptExecutor.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId)
+            const ae_log = await scriptExecutor.MaterialParse()
+
+            socket.emit(`material_parse_completed`, {
+                ae_log,
+                errCode: null
+            })
+        }
+        catch (e) {
+            socket.emit(`material_parse_completed`, {
+                ae_log: null,
+                errCode: e
+            })
+        }
+        isMaterialParsing = false
     })
 }
 func()
