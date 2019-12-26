@@ -39,7 +39,48 @@ function ParseMaterial() {
 
                     if(footage.Meta != undefined) //비디오인 경우
                     {
-                        sourceLayer.startTime = -footage.Meta.from;
+                        var zoom = 1;
+                        if(footage.Meta.crop.zoom)
+                        {
+                            zoom = footage.Meta.crop.zoom; //meta.crop.zoom
+                        }
+                        var startTime = 0;
+                        if(footage.Meta.from)
+                        {
+                            startTime = footage.Meta.from;//meta.from
+                        }
+
+                        sourceLayer.startTime = 0;
+                        sourceLayer.inPoint = 0;
+
+                        sourceLayer.inPoint = startTime;
+                        sourceLayer.startTime = -startTime;
+
+                        //sourceLayer.outPoint = comp.workAreaDuration;
+
+                        var sizeX = 100*comp.width/sourceLayer.width;
+                        var sizeY = 100*comp.height/sourceLayer.height;
+
+                        if(sizeX > sizeY)
+                        {
+                            sizeY=sizeX;
+                        }
+                        else 
+                        {
+                            sizeX=sizeY;
+                        }
+                        
+                        sourceLayer.transform.Scale.setValue([sizeX * zoom,sizeY * zoom]);
+
+                        var deltaX = 0; 
+                        if(footage.Meta.crop.x) deltaX = footage.Meta.crop.x; //meta.crop.x
+                        var deltaY = 0; 
+                        if(footage.Meta.crop.y) deltaY = footage.Meta.crop.y; //meta.crop.y
+                        
+                        var newX = comp.width * 0.5 + deltaX * comp.width;
+                        var newY = comp.height * 0.5 + deltaY * comp.height;
+                        
+                        sourceLayer.transform.position.setValue([newX,newY]);
                     }
                     else //이미지인 경우
                     {
