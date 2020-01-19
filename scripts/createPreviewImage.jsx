@@ -40,11 +40,11 @@ function ParseMaterial() {
 
                     if(footage.Meta != undefined) //비디오인 경우
                     {
-                        var zoom = 1;
-                        if(footage.Meta.crop.zoom)
-                        {
-                            zoom = footage.Meta.crop.zoom; //meta.crop.zoom
-                        }
+                        // var zoom = 1;
+                        // if(footage.Meta.crop.zoom)
+                        // {
+                        //     zoom = footage.Meta.crop.zoom; //meta.crop.zoom
+                        // }
                         var startTime = 0;
                         if(footage.Meta.from)
                         {
@@ -57,31 +57,31 @@ function ParseMaterial() {
                         sourceLayer.inPoint = startTime;
                         sourceLayer.startTime = -startTime;
 
-                        //sourceLayer.outPoint = comp.workAreaDuration;
+                        // //sourceLayer.outPoint = comp.workAreaDuration;
 
-                        var sizeX = 100*comp.width/sourceLayer.width;
-                        var sizeY = 100*comp.height/sourceLayer.height;
+                        // var sizeX = 100*comp.width/sourceLayer.width;
+                        // var sizeY = 100*comp.height/sourceLayer.height;
 
-                        if(sizeX > sizeY)
-                        {
-                            sizeY=sizeX;
-                        }
-                        else 
-                        {
-                            sizeX=sizeY;
-                        }
+                        // if(sizeX > sizeY)
+                        // {
+                        //     sizeY=sizeX;
+                        // }
+                        // else 
+                        // {
+                        //     sizeX=sizeY;
+                        // }
                         
-                        sourceLayer.transform.Scale.setValue([sizeX * zoom,sizeY * zoom]);
+                        // sourceLayer.transform.Scale.setValue([sizeX * zoom,sizeY * zoom]);
 
-                        var deltaX = 0; 
-                        if(footage.Meta.crop.x) deltaX = footage.Meta.crop.x; //meta.crop.x
-                        var deltaY = 0; 
-                        if(footage.Meta.crop.y) deltaY = footage.Meta.crop.y; //meta.crop.y
+                        // var deltaX = 0; 
+                        // if(footage.Meta.crop.x) deltaX = footage.Meta.crop.x; //meta.crop.x
+                        // var deltaY = 0; 
+                        // if(footage.Meta.crop.y) deltaY = footage.Meta.crop.y; //meta.crop.y
                         
-                        var newX = comp.width * 0.5 + deltaX * comp.width;
-                        var newY = comp.height * 0.5 + deltaY * comp.height;
+                        // var newX = comp.width * 0.5 + deltaX * comp.width;
+                        // var newY = comp.height * 0.5 + deltaY * comp.height;
                         
-                        sourceLayer.transform.position.setValue([newX,newY]);
+                        // sourceLayer.transform.position.setValue([newX,newY]);
                     }
                     else
                     {
