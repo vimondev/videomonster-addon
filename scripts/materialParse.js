@@ -44,6 +44,7 @@ function ParseMaterial() {
                         {
                             zoom = footage.Meta.crop.zoom; //meta.crop.zoom
                         }
+
                         var startTime = 0;
                         if(footage.Meta.from)
                         {
@@ -56,7 +57,7 @@ function ParseMaterial() {
                         sourceLayer.inPoint = startTime;
                         sourceLayer.startTime = -startTime;
 
-                        //sourceLayer.outPoint = comp.workAreaDuration;
+                        // //sourceLayer.outPoint = comp.workAreaDuration;
 
                         var sizeX = 100*comp.width/sourceLayer.width;
                         var sizeY = 100*comp.height/sourceLayer.height;
@@ -70,7 +71,8 @@ function ParseMaterial() {
                             sizeX=sizeY;
                         }
                         
-                        sourceLayer.transform.Scale.setValue([sizeX * zoom,sizeY * zoom]);
+                        // sourceLayer.transform.Scale.setValue([sizeX * zoom,sizeY * zoom]);
+                        sourceLayer.transform.Scale.expression = "sizeX = 100 * " + (sizeX * zoom * 0.01) + ";" + "sizeY = 100 * " + (sizeY * zoom * 0.01) + ";[sizeX,sizeY]";
 
                         var deltaX = 0; 
                         if(footage.Meta.crop.x) deltaX = footage.Meta.crop.x; //meta.crop.x
@@ -80,7 +82,10 @@ function ParseMaterial() {
                         var newX = comp.width * 0.5 + deltaX * comp.width;
                         var newY = comp.height * 0.5 + deltaY * comp.height;
                         
-                        sourceLayer.transform.position.setValue([newX,newY]);
+                        //이것도문제네... 일단 표현식으로 강제해놓고 포지션만지지말라고하자 답이없음 이건
+                        /*다른 방안... 정 @Source에 포지션을 건들여야하면 다른 컴포지션을 한번 더 덮어쓰게끔 */
+                        sourceLayer.transform.Position.expression = "["+newX+","+newY+"]";
+
                     }
                     else //이미지인 경우
                     {

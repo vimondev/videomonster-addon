@@ -103,6 +103,7 @@ async function func() {
             gettyImagesPath,
             TemplateId
         } = data
+        console.log(data)
 
         try {
             // 폰트 설치
@@ -137,6 +138,7 @@ async function func() {
             gettyImagesPath,
             TemplateId
         } = data
+        console.log(data)
 
         try {
             // 폰트 설치
