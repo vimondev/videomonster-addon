@@ -123,11 +123,15 @@ async function func() {
             Material_Json,
             ReplaceSourcePath,
             gettyImagesPath,
-            TemplateId
+            TemplateId,
+
+            installFontMap
         } = data
         console.log(data)
 
         try {
+            if (typeof installFontMap === 'object') await global.InstallGlobalFont(installFontMap)
+
             // 폰트 설치
             await global.InstallFont(fontPath)
 
@@ -158,11 +162,15 @@ async function func() {
             Material_Json,
             ReplaceSourcePath,
             gettyImagesPath,
-            TemplateId
+            TemplateId,
+
+            installFontMap
         } = data
         console.log(data)
 
         try {
+            if (typeof installFontMap === 'object') await global.InstallGlobalFont(installFontMap)
+            
             // 폰트 설치
             await global.InstallFont(fontPath)
 

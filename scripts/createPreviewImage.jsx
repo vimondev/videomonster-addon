@@ -116,17 +116,30 @@ function ParseMaterial() {
                     textLayer.text.sourceText.setValue(orgValue);
                     var decressDelta = 0.5;
 
-                    //2019/01/06 텍스트 Fitting
-                    var curWidth = textLayer.sourceRectAtTime(0,false).width;
-                    while(orgWidth < curWidth)
+                    if(text.Font)
                     {
                         var textProp = textLayer.property("Source Text");
                         var textDocument = textProp.value;
-                        if(textDocument.fontSize - decressDelta <decressDelta) break;
-                        
-                        textDocument.fontSize -= decressDelta;
-                        textProp.setValue(textDocument);
-                        curWidth = textLayer.sourceRectAtTime(0,false).width;
+                        textDocument.font = text.Font;
+                        textProp.setValue(textDocument);    
+                    }
+
+                    if (textLayer.canSetCollapseTransformation) {
+                        textLayer.collapseTransformation = true
+                    }
+                    else {
+                        //2019/01/06 텍스트 Fitting
+                        var curWidth = textLayer.sourceRectAtTime(0,false).width;
+                        while(orgWidth < curWidth)
+                        {
+                            var textProp = textLayer.property("Source Text");
+                            var textDocument = textProp.value;
+                            if(textDocument.fontSize - decressDelta <decressDelta) break;
+                            
+                            textDocument.fontSize -= decressDelta;
+                            textProp.setValue(textDocument);
+                            curWidth = textLayer.sourceRectAtTime(0,false).width;
+                        }
                     }
                 }
             }
