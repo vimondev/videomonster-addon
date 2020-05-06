@@ -50,7 +50,7 @@ exports.InstallGlobalFont = async installFontMap => {
     const keys = Object.keys(installFontMap)
 
     for (let i=0; i<keys.length; i++) {
-        const filepath = installFontMap[key]
+        const filepath = installFontMap[keys[i]]
         const filename = path.basename(filepath)
 
         if (!(await AccessAsync(`${fontPath}/${filename}`))) {
