@@ -144,11 +144,6 @@ exports.CreatePreviewImage = (imagePath) => {
                     for (let i=0; i<files.length; i++) {
                         let fileName = files[i]
 
-                        let index = fileName.indexOf(`_`)
-                        if (index != -1) {
-                            fileName = fileName.slice(0, index) + `.jpg`
-                        }
-
                         // _ 제거 후 원격지에 저장한다. 원본 파일은 삭제한다.
                         await CopyFileAsync(`${localPath}/${files[i]}`, `${imagePath}/${fileName}`)
                         await UnlinkAsync(`${localPath}/${files[i]}`)
