@@ -157,6 +157,7 @@ async function func() {
         isMaterialParsing = true
         const {
             fontPath,
+            imagePath,
 
             Template_path,
             Material_Json,
@@ -176,7 +177,7 @@ async function func() {
 
             // Path 설정 후 렌더링
             scriptExecutor.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId)
-            const ae_log = await scriptExecutor.MaterialParse()
+            const ae_log = await scriptExecutor.MaterialParse(imagePath)
 
             socket.emit(`material_parse_completed`, {
                 ae_log,

@@ -13,6 +13,7 @@ var projFile = new File(projectPath);
 var prj = app.open(projFile);
 
 ParseMaterial();
+CreatePreview();
 
 function ParseMaterial() {
     var material = ${Material};
@@ -175,11 +176,69 @@ function ParseMaterial() {
         }
     }
     
-    //var newFile = new File(resultPath+'\\' + 'Result.aep');
     var newFile = new File(replaceSourcePath + 'Result.aep');
     prj.save(newFile);
-//    RenderTarget();
     return 0;
+}
+
+function CreatePreview()
+{
+    var proj = app.project;
+    var index = 1;
+    var items = app.project.items;
+    //ClearRenderQueue();
+
+    for(var i=1; i <= items.length; i++)
+    {
+        var itemName = items[i].name.toLowerCase();
+        if(itemName.indexOf('#cut') != -1)
+        {
+            // for(var j = 1; j < items[i].layers.length; j++)
+            // {
+       
+            //     if(items[i].layers[j] instanceof CameraLayer)
+            //     {
+            //         items[i].layers[j].enabled = false;
+            //     }
+            // }
+            var markers = null; //items[i].layers.byName('@PREVIEW');
+            
+            for(var j = 1; j <= items[i].layers.length; j++)
+            {
+                if(items[i].layers[j].name.toLowerCase() == '@preview' && items[i].layers[j].enabled && !items[i].layers[j].shy)
+                {
+                    markers = items[i].layers[j]
+                }
+            }
+            
+            if(markers)
+            {
+                var render = proj.renderQueue.items.add(items[i]);
+                var renderSetting = render.getSettings(GetSettingsFormat.STRING_SETTABLE)
+
+                delete renderSetting['Time Span'];
+                renderSetting['Time Span Start'] = markers.inPoint;
+                renderSetting['Time Span End'] = markers.inPoint;
+                renderSetting['Time Span Duration'] = '0.03';
+
+                render.setSettings(renderSetting);
+                
+                render.outputModule(1).applyTemplate('PreviewOM');
+                var omSetting = render.outputModule(1).getSettings(GetSettingsFormat.STRING_SETTABLE);
+                
+                omSetting['Output File Info'] = 
+                {
+                    'Base Path': resultPath,
+                    'Subfolder Path':'',
+                    'File Name':'Cut' + index + '.jpg'
+                };
+                render.outputModule(1).setSettings(omSetting);
+                index++;
+            }
+        }
+    }
+
+    proj.renderQueue.render();
 }
 
 // function RenderTarget() {
