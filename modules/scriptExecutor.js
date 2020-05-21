@@ -128,16 +128,17 @@ exports.CreatePreviewImage = (imagePath) => {
             child.on('close', async code => {
                 isScriptRunning = false
                 try {
-                    // 위에 로직과 중복
-                    if (await AccessAsync(imagePath)) {
-                        const files = await ReadDirAsync(imagePath)
-                        for (let i = 0; i < files.length; i++) {
-                            if (await AccessAsync(`${imagePath}/${files[i]}`)) {
-                                await UnlinkAsync(`${imagePath}/${files[i]}`)
+                    if (imagePath) {
+                        if (await AccessAsync(imagePath)) {
+                            const files = await ReadDirAsync(imagePath)
+                            for (let i = 0; i < files.length; i++) {
+                                if (await AccessAsync(`${imagePath}/${files[i]}`)) {
+                                    await UnlinkAsync(`${imagePath}/${files[i]}`)
+                                }
                             }
                         }
+                        else await MkdirAsync(imagePath)
                     }
-                    else await MkdirAsync(imagePath)
 
                     // 렌더링이 완료된 파일을 찾는다. (localPath에 저장됨.)
                     const files = await ReadDirAsync(localPath)
@@ -145,7 +146,9 @@ exports.CreatePreviewImage = (imagePath) => {
                         let fileName = files[i]
 
                         // _ 제거 후 원격지에 저장한다. 원본 파일은 삭제한다.
-                        await CopyFileAsync(`${localPath}/${files[i]}`, `${imagePath}/${fileName}`)
+                        if (imagePath) {
+                            await CopyFileAsync(`${localPath}/${files[i]}`, `${imagePath}/${fileName}`)
+                        }
                         await UnlinkAsync(`${localPath}/${files[i]}`)
                     }
                     // 로컬 폴더는 이제 삭제한다.
