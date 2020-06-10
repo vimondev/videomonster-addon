@@ -6,6 +6,7 @@ const path = require('path')
 const {
     aerenderPath
 } = config
+const { retry } = require('../global')
 
 const Save_path = `C:/result`
 const ScriptRoot_path = __dirname.replace('modules', 'Scripts').replace(/\\/gi, '/')
@@ -130,29 +131,29 @@ exports.CreatePreviewImage = (imagePath) => {
                 try {
                     if (imagePath) {
                         if (await AccessAsync(imagePath)) {
-                            const files = await ReadDirAsync(imagePath)
+                            const files = await retry(ReadDirAsync(imagePath))
                             for (let i = 0; i < files.length; i++) {
                                 if (await AccessAsync(`${imagePath}/${files[i]}`)) {
-                                    await UnlinkAsync(`${imagePath}/${files[i]}`)
+                                    await retry(UnlinkAsync(`${imagePath}/${files[i]}`))
                                 }
                             }
                         }
-                        else await MkdirAsync(imagePath)
+                        else await retry(MkdirAsync(imagePath))
                     }
 
                     // 렌더링이 완료된 파일을 찾는다. (localPath에 저장됨.)
-                    const files = await ReadDirAsync(localPath)
+                    const files = await retry(ReadDirAsync(localPath))
                     for (let i=0; i<files.length; i++) {
                         let fileName = files[i]
 
                         // _ 제거 후 원격지에 저장한다. 원본 파일은 삭제한다.
                         if (imagePath) {
-                            await CopyFileAsync(`${localPath}/${files[i]}`, `${imagePath}/${fileName}`)
+                            await retry(CopyFileAsync(`${localPath}/${files[i]}`, `${imagePath}/${fileName}`))
                         }
-                        await UnlinkAsync(`${localPath}/${files[i]}`)
+                        await retry(UnlinkAsync(`${localPath}/${files[i]}`))
                     }
                     // 로컬 폴더는 이제 삭제한다.
-                    await RmDirAsync(localPath)
+                    await retry(RmDirAsync(localPath))
 
                     resolve(ae_log)
                 }
@@ -219,29 +220,29 @@ exports.MaterialParse = (imagePath) => {
                 try {
                     if (imagePath) {
                         if (await AccessAsync(imagePath)) {
-                            const files = await ReadDirAsync(imagePath)
+                            const files = await retry(ReadDirAsync(imagePath))
                             for (let i = 0; i < files.length; i++) {
                                 if (await AccessAsync(`${imagePath}/${files[i]}`)) {
-                                    await UnlinkAsync(`${imagePath}/${files[i]}`)
+                                    await retry(UnlinkAsync(`${imagePath}/${files[i]}`))
                                 }
                             }
                         }
-                        else await MkdirAsync(imagePath)
+                        else await retry(MkdirAsync(imagePath))
                     }
 
                     // 렌더링이 완료된 파일을 찾는다. (localPath에 저장됨.)
-                    const files = await ReadDirAsync(localPath)
+                    const files = await retry(ReadDirAsync(localPath))
                     for (let i=0; i<files.length; i++) {
                         let fileName = files[i]
 
                         // _ 제거 후 원격지에 저장한다. 원본 파일은 삭제한다.
                         if (imagePath) {
-                            await CopyFileAsync(`${localPath}/${files[i]}`, `${imagePath}/${fileName}`)
+                            await retry(CopyFileAsync(`${localPath}/${files[i]}`, `${imagePath}/${fileName}`))
                         }
-                        await UnlinkAsync(`${localPath}/${files[i]}`)
+                        await retry(UnlinkAsync(`${localPath}/${files[i]}`))
                     }
                     // 로컬 폴더는 이제 삭제한다.
-                    await RmDirAsync(localPath)
+                    await retry(RmDirAsync(localPath))
 
                     resolve(ae_log)
                 }
