@@ -139,11 +139,41 @@ function ParseMaterial() {
                         }
                     }
 
-                    if (text.Font) {
+                    if (text.Font || text.option) {
                         var textProp = textLayer.property("Source Text");
                         var textDocument = textProp.value;
-                        changedFontMap[textDocument.font] = text.Font;
-                        textDocument.font = text.Font;
+
+                        if (text.Font) {
+                            changedFontMap[textDocument.font] = text.Font;
+                            textDocument.font = text.Font;
+                        }
+                        if (text.option) {
+                            if (text.option.Font) {
+                                textDocument.font = text.option.Font.postscriptName;
+                            }
+                            if (text.option.fontSize) {
+                                textDocument.fontSize = textDocument.fontSize + (textDocument.fontSize * (text.option.fontSize / 100));
+                            }
+                            if (textDocument.applyFill && text.option.fillColor) {
+                                text.option.fillColor = text.option.fillColor.replace('#', '');
+
+                                var r = parseInt(text.option.fillColor.substr(0, 2), 16) / 255;
+                                var g = parseInt(text.option.fillColor.substr(2, 2), 16) / 255;
+                                var b = parseInt(text.option.fillColor.substr(4, 2), 16) / 255;
+
+                                textDocument.fillColor = [r, g, b];
+                            }
+                            if (textDocument.applyStroke && text.option.strokeColor) {
+                                text.option.strokeColor = text.option.strokeColor.replace('#', '');
+
+                                var r = parseInt(text.option.strokeColor.substr(0, 2), 16) / 255;
+                                var g = parseInt(text.option.strokeColor.substr(2, 2), 16) / 255;
+                                var b = parseInt(text.option.strokeColor.substr(4, 2), 16) / 255;
+
+                                textDocument.strokeColor = [r, g, b];
+                            }
+                        }
+
                         textProp.setValue(textDocument);
                     }
                 }
