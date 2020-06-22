@@ -28,30 +28,51 @@ async function func() {
         })
     }
 
+    function MkdirAsync(path) {
+        return new Promise((resolve, reject) => {
+            fs.mkdir(path, err => {
+                if (err) reject(err)
+                else resolve()
+            })
+        })
+    }
+
     function DeleteMediaCache() {
         return new Promise(resolve => {
             const mediaCacheDir = require('os').homedir() + '\\AppData\\Roaming\\Adobe\\Common\\Media Cache Files'
-            
+
             fs.access(mediaCacheDir, err => {
                 if (err) return resolve()
-    
+
                 fs.readdir(mediaCacheDir, (err, files) => {
                     if (err) return resolve()
-    
+
                     files.forEach(file => {
                         fs.unlinkSync(mediaCacheDir + '\\' + file)
                     })
-    
+
                     resolve()
                 })
             })
         })
     }
 
+    async function createFolder(folderPath) {
+        try {
+            if (!await AccessAsync(folderPath)) {
+                await MkdirAsync(folderPath)
+            }
+        }
+        catch (e) {
+            console.log(e)
+        }
+    }
+
     const config = require(`./config`)
     const global = require(`./global`)
+    const fsAsync = require(`./modules/fsAsync`)
     const scriptExecutor = require(`./modules/scriptExecutor`)
-    
+
     // 이미지 렌더링 수행중?
     let isImageRendering = false
     let isMaterialParsing = false
@@ -133,6 +154,8 @@ async function func() {
             if (typeof installFontMap === 'object') await global.InstallGlobalFont(installFontMap)
 
             // 폰트 설치
+            await fsAsync.UnlinkFolderRecursive(config.fontPath)
+            await createFolder(config.fontPath)
             await global.InstallFont(fontPath)
 
             // Path 설정 후 렌더링
@@ -171,8 +194,10 @@ async function func() {
 
         try {
             if (typeof installFontMap === 'object') await global.InstallGlobalFont(installFontMap)
-            
+
             // 폰트 설치
+            await fsAsync.UnlinkFolderRecursive(config.fontPath)
+            await createFolder(config.fontPath)
             await global.InstallFont(fontPath)
 
             // Path 설정 후 렌더링
