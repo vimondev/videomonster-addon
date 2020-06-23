@@ -151,12 +151,12 @@ async function func() {
         console.log(data)
 
         try {
-            if (typeof installFontMap === 'object') await global.InstallGlobalFont(installFontMap)
-
             // 폰트 설치
             await fsAsync.UnlinkFolderRecursive(config.fontPath)
             await createFolder(config.fontPath)
+
             await global.InstallFont(fontPath)
+            if (typeof installFontMap === 'object') await global.InstallGlobalFont(installFontMap)
 
             // Path 설정 후 렌더링
             scriptExecutor.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId)
@@ -193,12 +193,12 @@ async function func() {
         console.log(data)
 
         try {
-            if (typeof installFontMap === 'object') await global.InstallGlobalFont(installFontMap)
-
             // 폰트 설치
             await fsAsync.UnlinkFolderRecursive(config.fontPath)
             await createFolder(config.fontPath)
+            
             await global.InstallFont(fontPath)
+            if (typeof installFontMap === 'object') await global.InstallGlobalFont(installFontMap)
 
             // Path 설정 후 렌더링
             scriptExecutor.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId)
