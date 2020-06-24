@@ -140,11 +140,11 @@ function ParseMaterial() {
                     }
 
                     if (text.Font || text.option) {
+                        changedFontMap[prj.item(i).name] = { fontSize: 0 };
                         var textProp = textLayer.property("Source Text");
                         var textDocument = textProp.value;
 
                         if (text.Font) {
-                            changedFontMap[textDocument.font] = text.Font;
                             textDocument.font = text.Font;
                         }
                         if (text.option) {
@@ -152,6 +152,7 @@ function ParseMaterial() {
                                 textDocument.font = text.option.Font.postscriptName;
                             }
                             if (text.option.fontSize) {
+                                changedFontMap[prj.item(i).name].fontSize = text.option.fontSize;
                                 textDocument.fontSize = textDocument.fontSize + (textDocument.fontSize * (text.option.fontSize / 100));
                             }
                             if (textDocument.applyFill && text.option.fillColor) {
@@ -195,10 +196,22 @@ function ParseMaterial() {
                     var textLayer = comp.layer(k);
                     if (textLayer != null && textLayer instanceof TextLayer) {
                         var textProp = textLayer.property("Source Text");
-                        var textDocument = textProp.value;
-                        if (changedFontMap.hasOwnProperty(textDocument.font)) {
-                            textDocument.font = changedFontMap[textDocument.font];
-                            textProp.setValue(textDocument);
+                        var expression = textProp.expression;
+                        if (typeof expression === 'string') {
+                            var start = expression.indexOf('#TEXT');
+                            var end = expression.indexOf('").layer("@Source").text.sourceText');
+                            var compName = expression.substring(start, end);
+                            var targetExpression = 'comp("' + compName + '").layer("@Source").text.sourceText';
+                            if (changedFontMap.hasOwnProperty(compName) && expression.indexOf(targetExpression) !== -1) {
+                                var textDocument = textProp.value;
+                                var fontSize = textDocument.fontSize * 1;
+                                fontSize = fontSize + fontSize * (changedFontMap[compName].fontSize / 100);
+
+                                textProp.expression = 'sourceText = comp("' + compName + '").layer("@Source").text.sourceText; style = comp("' + compName + '").layer("@Source").text.sourceText.style;';
+                                
+                                textDocument.fontSize = fontSize;
+                                textProp.setValue(textDocument);
+                            }
                         }
                     }
                 }
