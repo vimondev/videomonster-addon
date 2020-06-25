@@ -11,9 +11,9 @@ var projectPath = '${ProjectPath}';
 
 var projFile = new File(projectPath);
 var prj = app.open(projFile);
+prj.expressionEngine = 'javascript-1.0';
 
 ParseMaterial();
-CreatePreview();
 
 function ParseMaterial() {
     var material = ${Material};
@@ -140,7 +140,7 @@ function ParseMaterial() {
                     }
 
                     if (text.Font || text.option) {
-                        changedFontMap[prj.item(i).name] = { fontSize: 0 };
+                        changedFontMap[prj.item(i).name] = true;
                         var textProp = textLayer.property("Source Text");
                         var textDocument = textProp.value;
 
@@ -152,7 +152,6 @@ function ParseMaterial() {
                                 textDocument.font = text.option.Font.postscriptName;
                             }
                             if (text.option.fontSize) {
-                                changedFontMap[prj.item(i).name].fontSize = text.option.fontSize;
                                 textDocument.fontSize = textDocument.fontSize + (textDocument.fontSize * (text.option.fontSize / 100));
                             }
                             if (textDocument.applyFill && text.option.fillColor) {
@@ -189,12 +188,13 @@ function ParseMaterial() {
 
     if (changedFontCount > 0) {
         for (var i = 1; i <= prj.numItems; i++) {
-            if (prj.item(i) instanceof CompItem && !footageMaterialMap.hasOwnProperty(prj.items[i].name) && !textMaterialMap.hasOwnProperty(prj.item(i).name)) {
+            if (prj.item(i) instanceof CompItem) {
                 var comp = prj.item(i);
     
                 for (var k = 1; k <= comp.numLayers; k++) {
                     var textLayer = comp.layer(k);
                     if (textLayer != null && textLayer instanceof TextLayer) {
+                        if (textMaterialMap.hasOwnProperty(comp.name) && textLayer.name === '@Source') continue;
                         var textProp = textLayer.property("Source Text");
                         var expression = textProp.expression;
                         if (typeof expression === 'string') {
@@ -204,12 +204,8 @@ function ParseMaterial() {
                             var targetExpression = 'comp("' + compName + '").layer("@Source").text.sourceText';
                             if (changedFontMap.hasOwnProperty(compName) && expression.indexOf(targetExpression) !== -1) {
                                 var textDocument = textProp.value;
-                                var fontSize = textDocument.fontSize * 1;
-                                fontSize = fontSize + fontSize * (changedFontMap[compName].fontSize / 100);
 
                                 textProp.expression = 'sourceText = comp("' + compName + '").layer("@Source").text.sourceText; style = comp("' + compName + '").layer("@Source").text.sourceText.style;';
-                                
-                                textDocument.fontSize = fontSize;
                                 textProp.setValue(textDocument);
                             }
                         }
@@ -218,15 +214,15 @@ function ParseMaterial() {
             }
         }
     }
+    
+    var newFile = new File(replaceSourcePath + 'Result.aep');
+    prj.save(newFile);
 
-    // var newFile = new File(replaceSourcePath + 'Result.aep');
-    // prj.save(newFile);
-    // //RenderTarget();
-    return 0;
+    prj = app.open(newFile);
+    CreatePreview(prj);
 }
-function CreatePreview()
+function CreatePreview(proj)
 {
-    var proj = app.project;
     var index = 1;
     var items = app.project.items;
     //ClearRenderQueue();
