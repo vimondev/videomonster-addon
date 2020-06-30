@@ -1,4 +1,4 @@
-/// <reference types='types-for-adobe/AfterEffects/2018'/>\nalert(String(app));'> 
+﻿/// <reference types='types-for-adobe/AfterEffects/2018'/>\nalert(String(app));'> 
 var scriptFile = File('${Json2Path}');
 var script = '#include' + scriptFile.fullName;
 eval(script);
@@ -124,19 +124,19 @@ function ParseMaterial() {
                         if (textLayer.canSetCollapseTransformation) {
                             textLayer.collapseTransformation = true
                         }
-                        else {
-                            //2019/01/06 텍스트 Fitting
-                            var curWidth = textLayer.sourceRectAtTime(0, false).width;
-                            while (orgWidth < curWidth) {
-                                var textProp = textLayer.property("Source Text");
-                                var textDocument = textProp.value;
-                                if (textDocument.fontSize - decressDelta < decressDelta) break;
+                        // else {
+                        //     //2019/01/06 텍스트 Fitting
+                        //     var curWidth = textLayer.sourceRectAtTime(0, false).width;
+                        //     while (orgWidth < curWidth) {
+                        //         var textProp = textLayer.property("Source Text");
+                        //         var textDocument = textProp.value;
+                        //         if (textDocument.fontSize - decressDelta < decressDelta) break;
 
-                                textDocument.fontSize -= decressDelta;
-                                textProp.setValue(textDocument);
-                                curWidth = textLayer.sourceRectAtTime(0, false).width;
-                            }
-                        }
+                        //         textDocument.fontSize -= decressDelta;
+                        //         textProp.setValue(textDocument);
+                        //         curWidth = textLayer.sourceRectAtTime(0, false).width;
+                        //     }
+                        // }
                     }
 
                     if (text.Font || text.option) {
