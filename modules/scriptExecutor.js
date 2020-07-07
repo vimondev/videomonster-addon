@@ -6,7 +6,7 @@ const path = require('path')
 const {
     aerenderPath
 } = config
-const { retry } = require('../global')
+const { retry, ClearTask } = require('../global')
 
 const Save_path = `C:/result`
 const ScriptRoot_path = __dirname.replace('modules', 'Scripts').replace(/\\/gi, '/')
@@ -116,6 +116,17 @@ exports.CreatePreviewImage = (imagePath) => {
             // 이미지 렌더링 시작
             const child = execFile(`${aerenderPath}/AfterFX.com`, ['-s', script, '-noui'])
 
+            const startTime = Date.now()
+            function CheckAfterFXStuck() {
+                if (isScriptRunning) {
+                    if (Date.now() - startTime > 1000 * 60 * 10) {
+                        ClearTask().catch(() => {})
+                    }
+                    setTimeout(CheckAfterFXStuck, 1000)
+                }
+            }
+            CheckAfterFXStuck()
+
             child.stdout.on('data', data => {
                 ae_log += data
                 console.log(String(data))
@@ -128,6 +139,7 @@ exports.CreatePreviewImage = (imagePath) => {
 
             child.on('close', async code => {
                 isScriptRunning = false
+                
                 try {
                     if (imagePath) {
                         if (await AccessAsync(imagePath)) {
@@ -205,6 +217,17 @@ exports.MaterialParse = (imagePath) => {
             // 이미지 렌더링 시작
             const child = execFile(`${aerenderPath}/AfterFX.com`, ['-s', script, '-noui'])
 
+            const startTime = Date.now()
+            function CheckAfterFXStuck() {
+                if (isScriptRunning) {
+                    if (Date.now() - startTime > 1000 * 60 * 10) {
+                        ClearTask().catch(() => {})
+                    }
+                    setTimeout(CheckAfterFXStuck, 1000)
+                }
+            }
+            CheckAfterFXStuck()
+
             child.stdout.on('data', data => {
                 ae_log += data
                 console.log(String(data))
@@ -217,6 +240,7 @@ exports.MaterialParse = (imagePath) => {
 
             child.on('close', async code => {
                 isScriptRunning = false
+
                 try {
                     if (imagePath) {
                         if (await AccessAsync(imagePath)) {
