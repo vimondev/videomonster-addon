@@ -117,13 +117,10 @@ exports.CreatePreviewImage = (imagePath) => {
             const child = execFile(`${aerenderPath}/AfterFX.com`, ['-s', script, '-noui'])
 
             const startTime = Date.now()
-            let isStuck = false
             function CheckAfterFXStuck() {
                 if (isScriptRunning) {
                     if (Date.now() - startTime > 1000 * 60 * 10) {
-                        isStuck = true
                         ClearTask().catch(() => {})
-                        return reject('ERR_AFTER_FX_STUCK')
                     }
                     setTimeout(CheckAfterFXStuck, 1000)
                 }
@@ -142,7 +139,6 @@ exports.CreatePreviewImage = (imagePath) => {
 
             child.on('close', async code => {
                 isScriptRunning = false
-                if (isStuck) return
                 
                 try {
                     if (imagePath) {
@@ -222,13 +218,10 @@ exports.MaterialParse = (imagePath) => {
             const child = execFile(`${aerenderPath}/AfterFX.com`, ['-s', script, '-noui'])
 
             const startTime = Date.now()
-            let isStuck = false
             function CheckAfterFXStuck() {
                 if (isScriptRunning) {
                     if (Date.now() - startTime > 1000 * 60 * 10) {
-                        isStuck = true
                         ClearTask().catch(() => {})
-                        return reject('ERR_AFTER_FX_STUCK')
                     }
                     setTimeout(CheckAfterFXStuck, 1000)
                 }
@@ -247,7 +240,6 @@ exports.MaterialParse = (imagePath) => {
 
             child.on('close', async code => {
                 isScriptRunning = false
-                if (isStuck) return
 
                 try {
                     if (imagePath) {
