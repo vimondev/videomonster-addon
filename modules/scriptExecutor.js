@@ -4,11 +4,12 @@ const { execFile } = require(`child_process`)
 const config = require(`../config`)
 const path = require('path')
 const {
-    aerenderPath
+    aerenderPath,
+    localPath
 } = config
 const { retry, ClearTask } = require('../global')
 
-const Save_path = `C:/result`
+const Save_path = localPath
 const ScriptRoot_path = __dirname.replace('modules', 'Scripts').replace(/\\/gi, '/')
 
 let Template_path
