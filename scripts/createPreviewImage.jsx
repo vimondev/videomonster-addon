@@ -230,7 +230,7 @@ function CreatePreview(proj)
     for(var i=1; i <= items.length; i++)
     {
         var itemName = items[i].name.toLowerCase();
-        if(itemName.indexOf('#cut') != -1)
+        if(itemName.indexOf('#cut') != -1 && items[i].layers)
         {
             // for(var j = 1; j < items[i].layers.length; j++)
             // {
