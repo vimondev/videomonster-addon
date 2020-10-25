@@ -34,6 +34,31 @@ function ParseMaterial() {
     }
 
     for (var i = 1; i <= prj.numItems; i++) {
+        var comp = prj.item(i);
+        if (comp instanceof CompItem && comp.layer && comp.numLayers) {
+            var compName = comp.name.toLowerCase();
+            if (compName.indexOf('#target') != -1) {
+                for (var j = 1; j <= comp.numLayers; j++) {
+                    var layer = comp.layer(j);
+                    if (layer != null && layer instanceof AVLayer) {
+                        var name = layer.name.toLowerCase();
+                        layer.audioEnabled = name.indexOf('#cut') !== -1;
+                    }
+                }
+            }
+            else if (compName.indexOf('#cut') != -1) {
+                for (var j = 1; j <= comp.numLayers; j++) {
+                    var layer = comp.layer(j);
+                    if (layer != null && layer instanceof AVLayer) {
+                        var name = layer.name.toLowerCase();
+                        if (name.indexOf('#av') !== -1) layer.audioEnabled = true;
+                    }
+                }
+            }
+        }
+    }
+
+    for (var i = 1; i <= prj.numItems; i++) {
         if (prj.item(i) instanceof CompItem && footageMaterialMap.hasOwnProperty(prj.items[i].name)) {
             var footage = footageMaterialMap[prj.items[i].name];
             var comp = prj.item(i);
@@ -60,6 +85,8 @@ function ParseMaterial() {
                     if (footage.Meta.from) {
                         startTime = footage.Meta.from;//meta.from
                     }
+
+                    sourceLayer.audioEnabled = footage.Meta.enableAudio ? true : false;
 
                     sourceLayer.startTime = 0;
                     sourceLayer.inPoint = 0;
