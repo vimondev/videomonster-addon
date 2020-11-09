@@ -155,7 +155,7 @@ async function func() {
         catch (e) {
             socket.emit(`image_render_completed`, {
                 ae_log: null,
-                errCode: e
+                errCode: String(e)
             })
         }
         isImageRendering = false
@@ -197,7 +197,7 @@ async function func() {
         catch (e) {
             socket.emit(`material_parse_completed`, {
                 ae_log: null,
-                errCode: e
+                errCode: String(e)
             })
         }
         isMaterialParsing = false
