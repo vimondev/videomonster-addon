@@ -5,6 +5,27 @@ async function func() {
     const scriptExecutor = require(`./modules/scriptExecutor`)
     const fsAsync = require(`./modules/fsAsync`)
     const { v4: uuid } = require('uuid')
+    const git = require('simple-git')()
+  
+    async function GetTargetRenderServerIp() {
+      try {
+        const { current } = await git.status()
+        switch(current) {
+        
+          case 'master': return 'http://10.0.0.7:3000'
+          case 'dev': return 'http://10.0.0.19:3000'
+          case 'staticmachine': return 'https://videomonsterdevs.koreacentral.cloudapp.azure.com:3000'
+  
+          default: 
+            console.log(`[ERROR] Target Server Ip is null. (Branch : ${current})`)
+            return null
+        }
+      }
+      catch (e) {
+        console.log(e)
+        return null
+      }
+    }
     
     async function CreateAndReadToken() {
       try {
@@ -91,14 +112,17 @@ async function func() {
     // 이미지 렌더링 수행중?
     let isImageRendering = false
     let isMaterialParsing = false
+
+    let renderServerIp = await GetTargetRenderServerIp()
+    if(!renderServerIp) console.log(`[Error] RenderServerIp not found.`)
+    
     const rendererid = await CreateAndReadToken()
 
-    console.log(`start! / rendererid(${rendererid})`)
+    console.log(`start! / rendererid(${rendererid}) / targetServerIp(${renderServerIp})`)
 
     await DeleteMediaCache()
     
-
-    const socket = require(`socket.io-client`)(`http://videomonsterdevs.koreacentral.cloudapp.azure.com:3000`, {
+    const socket = require(`socket.io-client`)(renderServerIp, {
         transports: [`websocket`]
     })
 
