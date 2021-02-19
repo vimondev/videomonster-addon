@@ -127,6 +127,7 @@ async function func() {
 
             Template_path,
             Material_Json,
+            EditableData,
             ReplaceSourcePath,
             gettyImagesPath,
             TemplateId,
@@ -137,14 +138,14 @@ async function func() {
 
         try {
             // 폰트 설치
-            await fsAsync.UnlinkFolderRecursive(config.fontPath)
+            if (fsAsync.IsExistAsync(config.fontPath)) await fsAsync.UnlinkFolderRecursive(config.fontPath)
             await createFolder(config.fontPath)
 
             await global.InstallFont(fontPath)
             if (typeof installFontMap === 'object') await global.InstallGlobalFont(installFontMap)
 
             // Path 설정 후 렌더링
-            scriptExecutor.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId)
+            scriptExecutor.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId, EditableData)
             const ae_log = await scriptExecutor.CreatePreviewImage(imagePath)
 
             socket.emit(`image_render_completed`, {
@@ -155,7 +156,7 @@ async function func() {
         catch (e) {
             socket.emit(`image_render_completed`, {
                 ae_log: null,
-                errCode: e
+                errCode: String(e)
             })
         }
         isImageRendering = false
@@ -169,6 +170,7 @@ async function func() {
 
             Template_path,
             Material_Json,
+            EditableData,
             ReplaceSourcePath,
             gettyImagesPath,
             TemplateId,
@@ -179,14 +181,14 @@ async function func() {
 
         try {
             // 폰트 설치
-            await fsAsync.UnlinkFolderRecursive(config.fontPath)
+            if (fsAsync.IsExistAsync(config.fontPath)) await fsAsync.UnlinkFolderRecursive(config.fontPath)
             await createFolder(config.fontPath)
             
             await global.InstallFont(fontPath)
             if (typeof installFontMap === 'object') await global.InstallGlobalFont(installFontMap)
 
             // Path 설정 후 렌더링
-            scriptExecutor.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId)
+            scriptExecutor.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId, EditableData)
             const ae_log = await scriptExecutor.MaterialParse(imagePath)
 
             socket.emit(`material_parse_completed`, {
@@ -197,7 +199,7 @@ async function func() {
         catch (e) {
             socket.emit(`material_parse_completed`, {
                 ae_log: null,
-                errCode: e
+                errCode: String(e)
             })
         }
         isMaterialParsing = false

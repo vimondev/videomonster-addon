@@ -17,6 +17,7 @@ let Material_Json
 let ReplaceSourcePath
 let GettyImagesPath
 let TemplateId
+let EditableData
 
 let isScriptRunning = false
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
@@ -75,12 +76,13 @@ function RmDirAsync(path) {
 }
 
 // Rendering을 수행할 Path 설정
-exports.SetPath = (_Template_path, _Material_Json, _ReplaceSourcePath, _GettyImagesPath, _TemplateId) => {
+exports.SetPath = (_Template_path, _Material_Json, _ReplaceSourcePath, _GettyImagesPath, _TemplateId, _EditableData) => {
     Template_path = _Template_path
     Material_Json = _Material_Json
     ReplaceSourcePath = _ReplaceSourcePath
     GettyImagesPath = _GettyImagesPath
     TemplateId = _TemplateId
+    EditableData = _EditableData
 }
 
 // 이미지 렌더링
@@ -109,7 +111,9 @@ exports.CreatePreviewImage = (imagePath) => {
             let script = io.FileInfo.readAllText(`${ScriptRoot_path}/createPreviewImage.jsx`)
             script = script.replace('${ProjectPath}', Template_path);
             script = script.replace('${Json2Path}', `${ScriptRoot_path}/json2.js`);
+            script = script.replace('${ScriptRootPath}', ScriptRoot_path)
             script = script.replace('${Material}', Material_Json);
+            script = script.replace('${EditableData}', EditableData);
             script = script.replace('${ReplaceSourcePath}', ReplaceSourcePath);
             script = script.replace('${gettyImagesPath}', GettyImagesPath)
             script = script.replace('${ResultPath}', localPath)
@@ -210,7 +214,9 @@ exports.MaterialParse = (imagePath) => {
             let script = io.FileInfo.readAllText(`${ScriptRoot_path}/materialParse.js`)
             script = script.replace('${ProjectPath}', Template_path);
             script = script.replace('${Json2Path}', `${ScriptRoot_path}/json2.js`);
+            script = script.replace('${ScriptRootPath}', ScriptRoot_path)
             script = script.replace('${Material}', Material_Json);
+            script = script.replace('${EditableData}', EditableData);
             script = script.replace('${ReplaceSourcePath}', ReplaceSourcePath);
             script = script.replace('${gettyImagesPath}', GettyImagesPath)
             script = script.replace('${ResultPath}', localPath)
