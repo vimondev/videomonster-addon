@@ -127,6 +127,7 @@ async function func() {
 
             Template_path,
             Material_Json,
+            EditableData,
             ReplaceSourcePath,
             gettyImagesPath,
             TemplateId,
@@ -144,7 +145,7 @@ async function func() {
             if (typeof installFontMap === 'object') await global.InstallGlobalFont(installFontMap)
 
             // Path 설정 후 렌더링
-            scriptExecutor.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId)
+            scriptExecutor.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId, EditableData)
             const ae_log = await scriptExecutor.CreatePreviewImage(imagePath)
 
             socket.emit(`image_render_completed`, {
@@ -169,6 +170,7 @@ async function func() {
 
             Template_path,
             Material_Json,
+            EditableData,
             ReplaceSourcePath,
             gettyImagesPath,
             TemplateId,
@@ -186,7 +188,7 @@ async function func() {
             if (typeof installFontMap === 'object') await global.InstallGlobalFont(installFontMap)
 
             // Path 설정 후 렌더링
-            scriptExecutor.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId)
+            scriptExecutor.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId, EditableData)
             const ae_log = await scriptExecutor.MaterialParse(imagePath)
 
             socket.emit(`material_parse_completed`, {
