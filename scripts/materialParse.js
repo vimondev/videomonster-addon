@@ -288,7 +288,6 @@ function writeFile(fileObj, fileContent, encoding) {
 
 function CreatePreview(proj)
 {
-    var index = 1;
     var items = app.project.items;
     //ClearRenderQueue();
 
@@ -334,10 +333,9 @@ function CreatePreview(proj)
                 {
                     'Base Path': resultPath,
                     'Subfolder Path':'',
-                    'File Name':'Cut' + index + '.jpg'
+                    'File Name': items[i].name.toLowerCase().replace('#cut', 'Cut') + '.jpg'
                 };
                 render.outputModule(1).setSettings(omSetting);
-                index++;
             }
         }
     }
