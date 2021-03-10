@@ -133,12 +133,12 @@ exports.CreatePreviewImage = (imagePath) => {
             CheckAfterFXStuck()
 
             child.stdout.on('data', data => {
-                ae_log += data
+                ae_log += String(data)
                 console.log(String(data))
             })
             
             child.stderr.on('data', data => {
-                ae_log += data
+                ae_log += String(data)
                 console.log(String(data))
             })
 
@@ -236,12 +236,12 @@ exports.MaterialParse = (imagePath) => {
             CheckAfterFXStuck()
 
             child.stdout.on('data', data => {
-                ae_log += data
+                ae_log += String(data)
                 console.log(String(data))
             })
             
             child.stderr.on('data', data => {
-                ae_log += data
+                ae_log += String(data)
                 console.log(String(data))
             })
 

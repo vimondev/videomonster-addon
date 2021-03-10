@@ -734,7 +734,7 @@ function SlideCopyAndStretch(targetComp, data, material) {
         var item = Stretch[i]
         item.Stretch = Math.min(200, item.Stretch)
         item.Stretch = Math.max(50, item.Stretch)
-
+        
         stretchMap[item.Composition] = item.Stretch
     }
 
@@ -867,10 +867,8 @@ function SlideCopyAndStretch(targetComp, data, material) {
     }
     var copiedNewCutMap = {
         /*
-        #CUT1: {
-            #CUT1-1: AVLayer,
-            #CUT1-2: AVLayer
-        }
+        #CUT1-1: AVLayer,
+        #CUT1-2: AVLayer
         */
     }
 
@@ -882,14 +880,10 @@ function SlideCopyAndStretch(targetComp, data, material) {
     }
     var copiedNewReplaceCompMap = {
         /*
-        #TEXT1: {
-            #TEXT1-1: CompItem,
-            #TEXT1-2: CompItem
-        },
-        #AV1: {
-            #AV1-1: CompItem,
-            #AV1-2: CompItem
-        }
+        #TEXT1-1: CompItem,
+        #TEXT1-2: CompItem
+        #AV1-1: CompItem,
+        #AV1-2: CompItem
         */
     }
 
@@ -900,9 +894,7 @@ function SlideCopyAndStretch(targetComp, data, material) {
     }
     var copiedNewOtherCompMap = {
         /*
-        T3 Comp: {
-            T3 Comp-1: CompItem
-        }
+        T3 Comp-1: CompItem
         */
     }
 
@@ -975,15 +967,13 @@ function SlideCopyAndStretch(targetComp, data, material) {
                             if (originTransition.index > originCutIndex) newTransitionLayer.moveAfter(newLayer)
                         }
 
-                        if (!copiedNewCutMap[compName]) copiedNewCutMap[compName] = {}
-                        copiedNewCutMap[compName][newComp.name] = {
+                        copiedNewCutMap[newComp.name] = {
                             cut: newLayer,
                             trackMattes: newTrackMattes,
                             transitions: newTransitions
                         }
 
-                        if (!copiedNewOtherCompMap[compName]) copiedNewOtherCompMap[compName] = {}
-                        copiedNewOtherCompMap[compName][newComp.name] = newComp
+                        copiedNewOtherCompMap[newComp.name] = newComp
 
                         var newCompLayers = newComp.layers
                         for (var k = 1; k <= newCompLayers.length; k++) {
@@ -1000,16 +990,14 @@ function SlideCopyAndStretch(targetComp, data, material) {
                                     var newChildCompName = childLayerComp.name + '-' + j
                                     var newChildComp
 
-                                    if (!copiedNewReplaceCompMap[childLayerComp.name] || !copiedNewReplaceCompMap[childLayerComp.name][newChildCompName]) {
+                                    if (!copiedNewReplaceCompMap[newChildCompName]) {
                                         newChildComp = childLayerComp.duplicate()
                                         newChildComp.name = newChildCompName
 
                                         copiedOriginReplaceCompMap[childLayerComp.name] = childLayerComp
-
-                                        if (!copiedNewReplaceCompMap[childLayerComp.name]) copiedNewReplaceCompMap[childLayerComp.name] = {}
-                                        copiedNewReplaceCompMap[childLayerComp.name][newChildCompName] = newChildComp
+                                        copiedNewReplaceCompMap[newChildCompName] = newChildComp
                                     }
-                                    else newChildComp = copiedNewReplaceCompMap[childLayerComp.name][newChildCompName]
+                                    else newChildComp = copiedNewReplaceCompMap[newChildCompName]
 
                                     childLayer.name = newChildCompName
                                     childLayer.replaceSource(newChildComp, false)
@@ -1025,7 +1013,13 @@ function SlideCopyAndStretch(targetComp, data, material) {
         else if (layer.outPoint - layer.inPoint >= Time * 0.9) frameOrAudioLayers.push(layer)
     }
 
-    function ReplaceExpression(property, idx) {
+    function RecursiveReplaceExpression(property, idx) {
+        var numProperties = property.numProperties
+        if (numProperties && numProperties > 0) {
+            for (var i = 1; i <= numProperties; i++) {
+                RecursiveReplaceExpression(property.property(i), idx)
+            }
+        }
         if (property.expression) {
             var comps = []
 
@@ -1053,14 +1047,40 @@ function SlideCopyAndStretch(targetComp, data, material) {
         }
     }
 
-    function RecursiveScanningProperties(property, idx) {
+    function RecursiveCheckReplaceCompInExpression(property) {
+        var flag = false
         var numProperties = property.numProperties
         if (numProperties && numProperties > 0) {
             for (var i = 1; i <= numProperties; i++) {
-                RecursiveScanningProperties(property.property(i), idx)
+                flag = flag || RecursiveCheckReplaceCompInExpression(property.property(i))
             }
         }
-        ReplaceExpression(property, idx)
+        if (property.expression) {
+            var comps = []
+
+            for (var compName in copiedOriginCutMap) {
+                comps.push(compName)
+            }
+            for (var compName in copiedOriginReplaceCompMap) {
+                comps.push(compName)
+            }
+            for (var compName in copiedOriginOtherCompMap) {
+                comps.push(compName)
+            }
+
+            for (var i = 0; i < comps.length; i++) {
+                var compName = comps[i]
+                var quotes = ['\'', '"', '`']
+                for (var j = 0; j < quotes.length; j++) {
+                    var quote = quotes[j]
+                    var targetExpression = 'comp(' + quote + compName + quote + ')'
+                    if (property.expression.indexOf(targetExpression) !== -1) {
+                        return true
+                    }
+                }
+            }
+        }
+        return flag
     }
 
     function RecursiveCheckIsNeedCopy(layer) {
@@ -1075,10 +1095,15 @@ function SlideCopyAndStretch(targetComp, data, material) {
                     }
                 }
 
-                var originName = layer.name
+                var originName = comp.name
                 if (copiedOriginReplaceCompMap[originName]) flag = true
             }
         }
+        
+        if (layer) {
+            flag = flag || RecursiveCheckReplaceCompInExpression(layer)
+        }
+
         return flag
     }
 
@@ -1093,18 +1118,16 @@ function SlideCopyAndStretch(targetComp, data, material) {
                             var childLayer = childLayers[i]
 
                             var childLayerComp = childLayer.source
-                            if (childLayerComp instanceof CompItem && RecursiveCheckIsNeedCopy(childLayer)) {
+                            if (childLayerComp instanceof CompItem && RecursiveCheckIsNeedCopy(childLayer) && !copiedNewReplaceCompMap[childLayerComp.name]) {
                                 var newChildCompName = childLayerComp.name + '-' + idx
                                 var newChildComp
 
-                                if (!copiedNewOtherCompMap[childLayerComp.name] || !copiedNewOtherCompMap[childLayerComp.name][newChildCompName]) {
+                                if (!copiedNewOtherCompMap[newChildCompName]) {
                                     newChildComp = childLayerComp.duplicate()
                                     newChildComp.name = newChildCompName
 
                                     copiedOriginOtherCompMap[childLayerComp.name] = childLayerComp
-
-                                    if (!copiedNewOtherCompMap[childLayerComp.name]) copiedNewOtherCompMap[childLayerComp.name] = {}
-                                    copiedNewOtherCompMap[childLayerComp.name][newChildCompName] = newChildComp
+                                    copiedNewOtherCompMap[newChildCompName] = newChildComp
 
                                     var newChildLayerCompLayers = newChildComp.layers
                                     for (var j = 1; j <= newChildLayerCompLayers.length; j++) {
@@ -1113,13 +1136,13 @@ function SlideCopyAndStretch(targetComp, data, material) {
                                         var newName = originName + '-' + idx
 
                                         if (copiedOriginReplaceCompMap[originName] && childLayerCompLayer.source instanceof CompItem) {
-                                            if (copiedNewReplaceCompMap[originName][newName]) {
-                                                childLayerCompLayer.replaceSource(copiedNewReplaceCompMap[originName][newName], false)
+                                            if (copiedNewReplaceCompMap[newName]) {
+                                                childLayerCompLayer.replaceSource(copiedNewReplaceCompMap[newName], false)
                                             }
                                         }
                                     }
                                 }
-                                else newChildComp = copiedNewOtherCompMap[childLayerComp.name][newChildCompName]
+                                else newChildComp = copiedNewOtherCompMap[newChildCompName]
 
                                 childLayer.replaceSource(newChildComp, false)
                             }
@@ -1130,13 +1153,13 @@ function SlideCopyAndStretch(targetComp, data, material) {
                 }
             }
         }
-        RecursiveScanningProperties(layer, idx)
+        RecursiveReplaceExpression(layer, idx)
     }
 
     for (var compName in copiedOriginCutMap) {
         for (var i = 1; i <= copyMap[compName]; i++) {
             var newCompName = compName + '-' + i
-            var newCut = copiedNewCutMap[compName][newCompName].cut
+            var newCut = copiedNewCutMap[newCompName].cut
 
             RecursiveScanningLayer(newCut, i)
         }
@@ -1234,6 +1257,7 @@ function SlideCopyAndStretch(targetComp, data, material) {
 
             removeLayers(cutData)
             data.cuts.splice(i, 1)
+            removeAdditionalDuration -= 1 / 60
             i--
         }
     }
@@ -1251,7 +1275,7 @@ function SlideCopyAndStretch(targetComp, data, material) {
         if (group) {
             var nextCutOverlapDuration = originalCutMap[group.lastCutName].nextCutOverlapDuration
             var beforeCutOverlapDuration = originalCutMap[group.firstCutName].beforeCutOverlapDuration
-            var newGroupLayerAdditionalDuration = group.maxOutPoint - group.minInPoint
+            var newGroupLayerAdditionalDuration = (group.maxOutPoint - group.minInPoint) - (1 / 60)
 
             if (!isNaN(nextCutOverlapDuration)) newGroupLayerAdditionalDuration += nextCutOverlapDuration
             else if (!isNaN(beforeCutOverlapDuration)) newGroupLayerAdditionalDuration += beforeCutOverlapDuration
@@ -1267,7 +1291,7 @@ function SlideCopyAndStretch(targetComp, data, material) {
 
                 for (var j = 1; j <= copyMap[groupCompName]; j++) {
                     var newCompName = groupCompName + '-' + j
-                    var newCutData = copiedNewCutMap[groupCompName][newCompName]
+                    var newCutData = copiedNewCutMap[newCompName]
 
                     addDurationToLayers(newCutData, copyAdditionalDuration + newGroupLayerAdditionalDuration * j, true)
 
@@ -1293,15 +1317,16 @@ function SlideCopyAndStretch(targetComp, data, material) {
 
             for (var j = 1; j <= copyMap[compName]; j++) {
                 var newCompName = compName + '-' + j
-                var newCutData = copiedNewCutMap[compName][newCompName]
+                var newCutData = copiedNewCutMap[newCompName]
 
                 if (!isNaN(nextCutOverlapDuration)) copyAdditionalDuration += nextCutOverlapDuration
                 else if (!isNaN(beforeCutOverlapDuration)) copyAdditionalDuration += beforeCutOverlapDuration
-                copyAdditionalDuration += cutLayer.outPoint - cutLayer.inPoint
+                copyAdditionalDuration += (cutLayer.outPoint - cutLayer.inPoint) - (1 / 60)
 
                 addDurationToLayers(newCutData, copyAdditionalDuration, true)
             }
         }
+        if (copyMap[compName]) copyAdditionalDuration -= 1 / 60
     }
 
     function stretchToLayers(cutData, stretch) {
@@ -1337,7 +1362,8 @@ function SlideCopyAndStretch(targetComp, data, material) {
             stretchLayer(transition, calculatedPercentage, relativePos)
         }
 
-        return (originDuration * calculatedPercentage) - originDuration
+        var value = (originDuration * calculatedPercentage) - originDuration
+        return (value - (1 / 60))
     }
 
     var stretchAdditionalDuration = 0
@@ -1361,7 +1387,7 @@ function SlideCopyAndStretch(targetComp, data, material) {
             for (var j = 1; j <= copyMap[compName]; j++) {
                 for (var groupCompName in group.map) {
                     var newCompName = groupCompName + '-' + j
-                    var newCutData = copiedNewCutMap[groupCompName][newCompName]
+                    var newCutData = copiedNewCutMap[newCompName]
     
                     addDurationToLayers(newCutData, stretchAdditionalDuration, false)
                     if (stretchMap[newCompName]) stretchAdditionalDuration += stretchToLayers(newCutData, stretchMap[newCompName])
@@ -1376,7 +1402,7 @@ function SlideCopyAndStretch(targetComp, data, material) {
     
             for (var j = 1; j <= copyMap[compName]; j++) {
                 var newCompName = compName + '-' + j
-                var newCutData = copiedNewCutMap[compName][newCompName]
+                var newCutData = copiedNewCutMap[newCompName]
 
                 addDurationToLayers(newCutData, stretchAdditionalDuration, false)
                 if (stretchMap[newCompName]) stretchAdditionalDuration += stretchToLayers(newCutData, stretchMap[newCompName])
@@ -1385,8 +1411,14 @@ function SlideCopyAndStretch(targetComp, data, material) {
     }
 
     var totalAdditionalDuration = removeAdditionalDuration + copyAdditionalDuration + stretchAdditionalDuration
-    targetComp.duration += totalAdditionalDuration
-    targetComp.workAreaDuration = Math.min(targetComp.duration, targetComp.workAreaDuration + totalAdditionalDuration)
+
+    if (totalAdditionalDuration < 0) {
+        targetComp.workAreaDuration = targetComp.workAreaDuration + totalAdditionalDuration
+    }
+    else {
+        targetComp.duration += totalAdditionalDuration
+        targetComp.workAreaDuration = Math.min(targetComp.duration, targetComp.workAreaDuration + totalAdditionalDuration)
+    }
 
     for (var i = 0; i < frameOrAudioLayers.length; i++) {
         var layer = frameOrAudioLayers[i]

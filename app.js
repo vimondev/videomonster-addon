@@ -148,6 +148,8 @@ async function func() {
             scriptExecutor.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId, EditableData)
             const ae_log = await scriptExecutor.CreatePreviewImage(imagePath)
 
+            await fsAsync.WriteFileAsync(`${imagePath}/ae_log.txt`, ae_log)
+
             socket.emit(`image_render_completed`, {
                 ae_log,
                 errCode: null
@@ -190,6 +192,8 @@ async function func() {
             // Path 설정 후 렌더링
             scriptExecutor.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId, EditableData)
             const ae_log = await scriptExecutor.MaterialParse(imagePath)
+
+            await fsAsync.WriteFileAsync(`${imagePath}/ae_log.txt`, ae_log)
 
             socket.emit(`material_parse_completed`, {
                 ae_log,
