@@ -8,6 +8,7 @@ const {
     localPath
 } = config
 const { retry, ClearTask } = require('../global')
+const fsAsync = require('./fsAsync')
 
 const Save_path = localPath
 const ScriptRoot_path = __dirname.replace('modules', 'Scripts').replace(/\\/gi, '/')
@@ -91,6 +92,10 @@ exports.CreatePreviewImage = (imagePath) => {
         try {
             while (isScriptRunning) await sleep(1000)
             isScriptRunning = true
+
+            const homeDir = `${require('os').homedir()}/AppData`
+            await fsAsync.UnlinkFolderRecursiveIgnoreError(`${homeDir}/Local/Temp`)
+            await fsAsync.UnlinkFolderRecursiveIgnoreError(`${homeDir}/Roaming/Adobe/Common`)
 
             let ae_log = ``
 
@@ -194,6 +199,10 @@ exports.MaterialParse = (imagePath) => {
         try {
             while (isScriptRunning) await sleep(1000)
             isScriptRunning = true
+
+            const homeDir = `${require('os').homedir()}/AppData`
+            await fsAsync.UnlinkFolderRecursiveIgnoreError(`${homeDir}/Local/Temp`)
+            await fsAsync.UnlinkFolderRecursiveIgnoreError(`${homeDir}/Roaming/Adobe/Common`)
 
             let ae_log = ``
 
