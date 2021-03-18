@@ -1,8 +1,12 @@
 ﻿/// <reference types='types-for-adobe/AfterEffects/2018'/>\nalert(String(app));'> 
-var scriptFile = File('${Json2Path}');
-var script = '#include' + scriptFile.fullName;
-eval(script);
-clearOutput();
+function includeScript(filename) {
+    var scriptRootPath = '${ScriptRootPath}'
+    var scriptFile = File(scriptRootPath + '/' + filename);
+    return '#include ' + scriptFile.fullName;
+}
+
+eval(includeScript('json2.js'))
+eval(includeScript('slideHelper.js'))
 
 var resultPath = '${ResultPath}';
 var gettyImagesPath = '${gettyImagesPath}\\'
@@ -17,6 +21,8 @@ ParseMaterial();
 
 function ParseMaterial() {
     var material = ${Material};
+    var editableData = ${EditableData};
+    var duration = 0;
 
     var footageMaterialMap = {};
     var textMaterialMap = {};
@@ -33,21 +39,94 @@ function ParseMaterial() {
         textMaterialMap[text.Composition] = text;
     }
 
+    var targetFind = false
+    for (var i = 1; i <= prj.numItems; i++) {
+        var comp = prj.item(i);
+        if (comp instanceof CompItem && comp.layer && comp.numLayers) {
+            var compName = comp.name.toLowerCase();
+            if (compName.indexOf('#target') != -1 && !targetFind) {
+                targetFind = true
+                SlideCopyAndStretch(comp, editableData, material);
+
+                // Stretch 데이터 있을 시
+                if (material.Stretch && material.Stretch.length) {
+                    // Map 먼저 구성
+                    var stretchMaterialMap = {}
+                    for (var j = 0; j < material.Stretch.length; j++) {
+                        var item = material.Stretch[j]
+                        item.Stretch = Math.min(200, item.Stretch)
+                        item.Stretch = Math.max(50, item.Stretch)
+                        
+                        stretchMaterialMap[item.Composition] = item.Stretch
+                    }
+
+                    for (var j = 1; j <= comp.numLayers; j++) {
+                        var layer = comp.layer(j);
+                        if (layer instanceof AVLayer && layer.enabled && !layer.shy) {
+                            var cutComp = layer.source
+                            // #CUT에 Stretch가 있을 경우 하위 #AV레이어들을 찾아서 Stretch 데이터 넣어주기
+                            if (cutComp instanceof CompItem && cutComp.name.toLowerCase().indexOf('#cut') !== -1 && stretchMaterialMap[cutComp.name] && stretchMaterialMap[cutComp.name] !== 100) {
+                                for (var k = 1; k <= cutComp.numLayers; k++) {
+                                    var childLayer = cutComp.layer(k)
+
+                                    // Stretch는 #AV레이어에만 적용하면 됨 (footageMaterial)
+                                    // (데이터만 넣어놓고 적용은 하단에서 crop 이후 적용)
+                                    if (childLayer instanceof AVLayer && childLayer.enabled && !childLayer.shy) {
+                                        var childComp = childLayer.source
+                                        if (childComp instanceof CompItem && footageMaterialMap[childComp.name]) {
+                                            var sourceLayer = childComp.layers.byName('@Source')
+                                            if (sourceLayer instanceof AVLayer) {
+                                                footageMaterialMap[childComp.name].stretch = stretchMaterialMap[cutComp.name]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                duration = comp.workAreaDuration - comp.workAreaStart;
+
+                for (var j = 1; j <= comp.numLayers; j++) {
+                    var layer = comp.layer(j);
+                    if (layer != null && layer instanceof AVLayer) {
+                        var name = layer.name.toLowerCase();
+                        layer.audioEnabled = name.indexOf('#cut') !== -1;
+                    }
+                }
+            }
+            else if (compName.indexOf('#cut') != -1) {
+                for (var j = 1; j <= comp.numLayers; j++) {
+                    var layer = comp.layer(j);
+                    if (layer != null && layer instanceof AVLayer) {
+                        var name = layer.name.toLowerCase();
+                        if (name.indexOf('#av') !== -1) layer.audioEnabled = true;
+                    }
+                }
+            }
+        }
+    }
+
+    var footageItemObjectMap = {}
     for (var i = 1; i <= prj.numItems; i++) {
         if (prj.item(i) instanceof CompItem && footageMaterialMap.hasOwnProperty(prj.items[i].name)) {
             var footage = footageMaterialMap[prj.items[i].name];
             var comp = prj.item(i);
             var sourceLayer = comp.layer('@Source');
-            if (sourceLayer) {
-                var footageItem = sourceLayer.source;
-                if (footageItem) {
-                    if (footage.Meta != undefined && footage.Meta.source != undefined && footage.Meta.source == 'gettyimages') {
-                        footageItem.replace(new File(gettyImagesPath + footage.Replace));
-                    }
-                    else {
-                        footageItem.replace(new File(replaceSourcePath + footage.Replace));
-                    }
+            if (sourceLayer && sourceLayer.source) {
+                var footagePath
+                if (footage.Meta != undefined && footage.Meta.source != undefined && footage.Meta.source == 'gettyimages') {
+                    footagePath = gettyImagesPath + footage.Replace;
                 }
+                else {
+                    footagePath = replaceSourcePath + footage.Replace;
+                }
+
+                if (!footageItemObjectMap[footagePath]) {
+                    footageItemObjectMap[footagePath] = prj.importFile(new ImportOptions(new File(footagePath)))
+                }
+                sourceLayer.replaceSource(footageItemObjectMap[footagePath], false)
 
                 if (footage.Meta != undefined) //비디오인 경우
                 {
@@ -60,6 +139,8 @@ function ParseMaterial() {
                     if (footage.Meta.from) {
                         startTime = footage.Meta.from;//meta.from
                     }
+
+                    sourceLayer.audioEnabled = footage.Meta.enableAudio ? true : false;
 
                     sourceLayer.startTime = 0;
                     sourceLayer.inPoint = 0;
@@ -94,6 +175,20 @@ function ParseMaterial() {
                     /*다른 방안... 정 @Source에 포지션을 건들여야하면 다른 컴포지션을 한번 더 덮어쓰게끔 */
                     sourceLayer.transform.Position.expression = "[" + newX + "," + newY + "]";
 
+                    if (footage.stretch) {
+                        var calculatedPercentage = footage.stretch / 100
+                        var originInPoint = Number(sourceLayer.inPoint)
+                        var originOutPoint = Number(sourceLayer.outPoint)
+
+                        sourceLayer.stretch /= calculatedPercentage
+                        if (sourceLayer.inPoint !== originInPoint) {
+                            sourceLayer.startTime -= (sourceLayer.inPoint - originInPoint)
+                            sourceLayer.inPoint -= 0.05
+                        }
+                        if (sourceLayer.outPoint !== originOutPoint) {
+                            sourceLayer.outPoint = originOutPoint + 0.05
+                        }
+                    }
                 }
                 else //이미지인 경우
                 {
@@ -218,12 +313,33 @@ function ParseMaterial() {
     var newFile = new File(replaceSourcePath + 'Result.aep');
     prj.save(newFile);
 
+    var newJsonFile = new File(replaceSourcePath + 'Result.json');
+    writeFile(newJsonFile, JSON.stringify({ duration: duration }))
+
     prj = app.open(newFile);
     CreatePreview(prj);
 }
+
+function writeFile(fileObj, fileContent, encoding) {
+    encoding = encoding || 'utf-8';
+    fileObj = (fileObj instanceof File) ? fileObj : new File(fileObj);
+
+    var parentFolder = fileObj.parent;
+    if (!parentFolder.exists && !parentFolder.create())
+        throw new Error('Cannot create file in path ' + fileObj.fsName);
+
+
+    fileObj.encoding = encoding;
+    fileObj.open('w');
+    fileObj.write(fileContent);
+    fileObj.close();
+
+
+    return fileObj;
+}
+
 function CreatePreview(proj)
 {
-    var index = 1;
     var items = app.project.items;
     //ClearRenderQueue();
 
@@ -256,8 +372,12 @@ function CreatePreview(proj)
                 var renderSetting = render.getSettings(GetSettingsFormat.STRING_SETTABLE)
 
                 delete renderSetting['Time Span'];
-                renderSetting['Time Span Start'] = markers.inPoint;
-                renderSetting['Time Span End'] = markers.inPoint;
+
+                var inPoint = markers.inPoint
+                if (inPoint + 0.05 >= items[i].workAreaStart + items[i].workAreaDuration) inPoint -= 0.05
+
+                renderSetting['Time Span Start'] = inPoint;
+                renderSetting['Time Span End'] = inPoint;
                 renderSetting['Time Span Duration'] = '0.03';
 
                 render.setSettings(renderSetting);
@@ -269,10 +389,9 @@ function CreatePreview(proj)
                 {
                     'Base Path': resultPath,
                     'Subfolder Path':'',
-                    'File Name':'Cut' + index + '.jpg'
+                    'File Name': items[i].name.toLowerCase().replace('#cut', 'Cut') + '.jpg'
                 };
                 render.outputModule(1).setSettings(omSetting);
-                index++;
             }
         }
     }

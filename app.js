@@ -37,26 +37,6 @@ async function func() {
         })
     }
 
-    function DeleteMediaCache() {
-        return new Promise(resolve => {
-            const mediaCacheDir = require('os').homedir() + '\\AppData\\Roaming\\Adobe\\Common\\Media Cache Files'
-
-            fs.access(mediaCacheDir, err => {
-                if (err) return resolve()
-
-                fs.readdir(mediaCacheDir, (err, files) => {
-                    if (err) return resolve()
-
-                    files.forEach(file => {
-                        fs.unlinkSync(mediaCacheDir + '\\' + file)
-                    })
-
-                    resolve()
-                })
-            })
-        })
-    }
-
     async function createFolder(folderPath) {
         try {
             if (!await AccessAsync(folderPath)) {
@@ -78,8 +58,6 @@ async function func() {
     let isMaterialParsing = false
 
     console.log(`start!`)
-
-    await DeleteMediaCache()
 
     const socket = require(`socket.io-client`)(`http://10.0.0.7:3000`, {
         transports: [`websocket`]
@@ -127,6 +105,7 @@ async function func() {
 
             Template_path,
             Material_Json,
+            EditableData,
             ReplaceSourcePath,
             gettyImagesPath,
             TemplateId,
@@ -144,8 +123,10 @@ async function func() {
             if (typeof installFontMap === 'object') await global.InstallGlobalFont(installFontMap)
 
             // Path 설정 후 렌더링
-            scriptExecutor.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId)
+            scriptExecutor.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId, EditableData)
             const ae_log = await scriptExecutor.CreatePreviewImage(imagePath)
+
+            await fsAsync.WriteFileAsync(`${imagePath}/ae_log.txt`, ae_log)
 
             socket.emit(`image_render_completed`, {
                 ae_log,
@@ -169,6 +150,7 @@ async function func() {
 
             Template_path,
             Material_Json,
+            EditableData,
             ReplaceSourcePath,
             gettyImagesPath,
             TemplateId,
@@ -186,8 +168,10 @@ async function func() {
             if (typeof installFontMap === 'object') await global.InstallGlobalFont(installFontMap)
 
             // Path 설정 후 렌더링
-            scriptExecutor.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId)
+            scriptExecutor.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId, EditableData)
             const ae_log = await scriptExecutor.MaterialParse(imagePath)
+
+            await fsAsync.WriteFileAsync(`${imagePath}/ae_log.txt`, ae_log)
 
             socket.emit(`material_parse_completed`, {
                 ae_log,
