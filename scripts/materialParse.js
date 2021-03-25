@@ -128,7 +128,23 @@ function ParseMaterial() {
                 }
                 sourceLayer.replaceSource(footageItemObjectMap[footagePath], false)
 
-                if (footage.Meta != undefined) //비디오인 경우
+                if (footage.autoCrop)
+                {
+                    var zoom = 1;
+
+                    var sizeX = 100 * comp.width / sourceLayer.width;
+                    var sizeY = 100 * comp.height / sourceLayer.height;
+
+                    if (sizeX > sizeY) {
+                        sizeY = sizeX;
+                    }
+                    else {
+                        sizeX = sizeY;
+                    }
+
+                    sourceLayer.transform.Scale.expression = "sizeX = 100 * " + (sizeX * zoom * 0.01) + ";" + "sizeY = 100 * " + (sizeY * zoom * 0.01) + ";[sizeX,sizeY]";
+                }
+                else if (footage.Meta != undefined) //비디오인 경우
                 {
                     var zoom = 1;
                     if (footage.Meta.crop.zoom) {

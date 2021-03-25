@@ -123,14 +123,21 @@ exports.CreatePreviewImage = (imagePath) => {
             script = script.replace('${gettyImagesPath}', GettyImagesPath)
             script = script.replace('${ResultPath}', localPath)
             
+            const scriptPath = `${require('os').homedir()}/aescript.js`
+            await fsAsync.WriteFileAsync(scriptPath, script)
+
             // 이미지 렌더링 시작
-            const child = execFile(`${aerenderPath}/AfterFX.com`, ['-s', script, '-noui'])
+            const child = execFile(`${aerenderPath}/AfterFX.com`, ['-r', scriptPath, '-noui'])
 
             const startTime = Date.now()
+            let isStucked = false
             function CheckAfterFXStuck() {
                 if (isScriptRunning) {
                     if (Date.now() - startTime > 1000 * 60 * 10) {
                         ClearTask().catch(() => {})
+                        isScriptRunning = false
+                        isStucked = true
+                        reject()
                     }
                     setTimeout(CheckAfterFXStuck, 1000)
                 }
@@ -147,35 +154,36 @@ exports.CreatePreviewImage = (imagePath) => {
                 console.log(String(data))
             })
 
-            child.on('close', async code => {
-                isScriptRunning = false
-                
+            child.on('close', async code => {                
                 try {
-                    if (imagePath) {
-                        if (await AccessAsync(imagePath)) {
-                            const files = await retry(ReadDirAsync(imagePath))
-                            for (let i = 0; i < files.length; i++) {
-                                if (await AccessAsync(`${imagePath}/${files[i]}`)) {
-                                    await retry(UnlinkAsync(`${imagePath}/${files[i]}`))
+                    if (!isStucked) {
+                        isScriptRunning = false
+                        if (imagePath) {
+                            if (await AccessAsync(imagePath)) {
+                                const files = await retry(ReadDirAsync(imagePath))
+                                for (let i = 0; i < files.length; i++) {
+                                    if (await AccessAsync(`${imagePath}/${files[i]}`)) {
+                                        await retry(UnlinkAsync(`${imagePath}/${files[i]}`))
+                                    }
                                 }
                             }
+                            else await retry(MkdirAsync(imagePath))
                         }
-                        else await retry(MkdirAsync(imagePath))
-                    }
 
-                    // 렌더링이 완료된 파일을 찾는다. (localPath에 저장됨.)
-                    const files = await retry(ReadDirAsync(localPath))
-                    for (let i=0; i<files.length; i++) {
-                        let fileName = files[i]
+                        // 렌더링이 완료된 파일을 찾는다. (localPath에 저장됨.)
+                        const files = await retry(ReadDirAsync(localPath))
+                        for (let i = 0; i < files.length; i++) {
+                            let fileName = files[i]
 
-                        // _ 제거 후 원격지에 저장한다. 원본 파일은 삭제한다.
-                        if (imagePath) {
-                            await retry(CopyFileAsync(`${localPath}/${files[i]}`, `${imagePath}/${fileName}`))
+                            // _ 제거 후 원격지에 저장한다. 원본 파일은 삭제한다.
+                            if (imagePath) {
+                                await retry(CopyFileAsync(`${localPath}/${files[i]}`, `${imagePath}/${fileName}`))
+                            }
+                            await retry(UnlinkAsync(`${localPath}/${files[i]}`))
                         }
-                        await retry(UnlinkAsync(`${localPath}/${files[i]}`))
+                        // 로컬 폴더는 이제 삭제한다.
+                        await retry(RmDirAsync(localPath))
                     }
-                    // 로컬 폴더는 이제 삭제한다.
-                    await retry(RmDirAsync(localPath))
 
                     resolve(ae_log)
                 }
@@ -230,14 +238,22 @@ exports.MaterialParse = (imagePath) => {
             script = script.replace('${gettyImagesPath}', GettyImagesPath)
             script = script.replace('${ResultPath}', localPath)
             
+            const scriptPath = `${require('os').homedir()}/aescript.js`
+            await fsAsync.WriteFileAsync(scriptPath, script)
+
             // 이미지 렌더링 시작
-            const child = execFile(`${aerenderPath}/AfterFX.com`, ['-s', script, '-noui'])
+            const child = execFile(`${aerenderPath}/AfterFX.com`, ['-r', scriptPath, '-noui'])
 
             const startTime = Date.now()
+            
+            let isStucked = false
             function CheckAfterFXStuck() {
                 if (isScriptRunning) {
                     if (Date.now() - startTime > 1000 * 60 * 10) {
                         ClearTask().catch(() => {})
+                        isScriptRunning = false
+                        isStucked = true
+                        reject()
                     }
                     setTimeout(CheckAfterFXStuck, 1000)
                 }
@@ -255,34 +271,35 @@ exports.MaterialParse = (imagePath) => {
             })
 
             child.on('close', async code => {
-                isScriptRunning = false
-
                 try {
-                    if (imagePath) {
-                        if (await AccessAsync(imagePath)) {
-                            const files = await retry(ReadDirAsync(imagePath))
-                            for (let i = 0; i < files.length; i++) {
-                                if (await AccessAsync(`${imagePath}/${files[i]}`)) {
-                                    await retry(UnlinkAsync(`${imagePath}/${files[i]}`))
+                    if (!isStucked) {
+                        isScriptRunning = false
+                        if (imagePath) {
+                            if (await AccessAsync(imagePath)) {
+                                const files = await retry(ReadDirAsync(imagePath))
+                                for (let i = 0; i < files.length; i++) {
+                                    if (await AccessAsync(`${imagePath}/${files[i]}`)) {
+                                        await retry(UnlinkAsync(`${imagePath}/${files[i]}`))
+                                    }
                                 }
                             }
+                            else await retry(MkdirAsync(imagePath))
                         }
-                        else await retry(MkdirAsync(imagePath))
-                    }
-
-                    // 렌더링이 완료된 파일을 찾는다. (localPath에 저장됨.)
-                    const files = await retry(ReadDirAsync(localPath))
-                    for (let i=0; i<files.length; i++) {
-                        let fileName = files[i]
-
-                        // _ 제거 후 원격지에 저장한다. 원본 파일은 삭제한다.
-                        if (imagePath) {
-                            await retry(CopyFileAsync(`${localPath}/${files[i]}`, `${imagePath}/${fileName}`))
+    
+                        // 렌더링이 완료된 파일을 찾는다. (localPath에 저장됨.)
+                        const files = await retry(ReadDirAsync(localPath))
+                        for (let i=0; i<files.length; i++) {
+                            let fileName = files[i]
+    
+                            // _ 제거 후 원격지에 저장한다. 원본 파일은 삭제한다.
+                            if (imagePath) {
+                                await retry(CopyFileAsync(`${localPath}/${files[i]}`, `${imagePath}/${fileName}`))
+                            }
+                            await retry(UnlinkAsync(`${localPath}/${files[i]}`))
                         }
-                        await retry(UnlinkAsync(`${localPath}/${files[i]}`))
+                        // 로컬 폴더는 이제 삭제한다.
+                        await retry(RmDirAsync(localPath))
                     }
-                    // 로컬 폴더는 이제 삭제한다.
-                    await retry(RmDirAsync(localPath))
 
                     resolve(ae_log)
                 }
