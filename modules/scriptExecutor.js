@@ -249,11 +249,11 @@ exports.MaterialParse = (imagePath) => {
             let isStucked = false
             function CheckAfterFXStuck() {
                 if (isScriptRunning) {
-                    if (Date.now() - startTime > 1000 * 60 * 10) {
+                    if (Date.now() - startTime > 1000 * 60 * 9) {
                         ClearTask().catch(() => {})
                         isScriptRunning = false
                         isStucked = true
-                        reject()
+                        resolve('')
                     }
                     setTimeout(CheckAfterFXStuck, 1000)
                 }
