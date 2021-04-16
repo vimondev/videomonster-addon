@@ -45,27 +45,27 @@ function GetEditableData(targetComp) {
         return obj
     }
 
-    function RecursiveScanningProperties(property, depth) {
-        var data = {}
+    // function RecursiveScanningProperties(property, depth) {
+    //     var data = {}
 
-        if (depth > 0) {
-            data.name = property.name
-            data.numKeys = property.numKeys
-        }
+    //     if (depth > 0) {
+    //         data.name = property.name
+    //         data.numKeys = property.numKeys
+    //     }
 
-        var numProperties = property.numProperties
-        if (numProperties && numProperties > 0) {
-            for (var i = 1; i <= numProperties; i++) {
-                var prop = RecursiveScanningProperties(property.property(i), depth + 1)
-                if (prop.numKeys && prop.numKeys > 0 || prop.childProps) {
-                    if (!data.childProps) data.childProps = []
-                    data.childProps.push(prop)
-                }
-            }
-        }
+    //     var numProperties = property.numProperties
+    //     if (numProperties && numProperties > 0) {
+    //         for (var i = 1; i <= numProperties; i++) {
+    //             var prop = RecursiveScanningProperties(property.property(i), depth + 1)
+    //             if (prop.numKeys && prop.numKeys > 0 || prop.childProps) {
+    //                 if (!data.childProps) data.childProps = []
+    //                 data.childProps.push(prop)
+    //             }
+    //         }
+    //     }
 
-        return data
-    }
+    //     return data
+    // }
 
     function RecursiveScanningLayer(layer) {
         scanCount++
@@ -114,7 +114,7 @@ function GetEditableData(targetComp) {
             obj.layerType = "TextLayer"
         }
 
-        obj.properties = RecursiveScanningProperties(layer, 0).childProps
+        // obj.properties = RecursiveScanningProperties(layer, 0).childProps
 
         return obj
     }
@@ -199,31 +199,31 @@ function GetEditableData(targetComp) {
                 }
                 if (item.hasOwnProperty('parent')) hasParent = true
 
-                if (item.properties && item.properties.length) {
-                    var propertyArr = []
-                    function propertyDfs(property, str) {
-                        if (property.childProps && property.childProps.length) {
-                            for (var j = 0; j < property.childProps.length; j++) {
-                                var childProperty = property.childProps[j]
-                                propertyDfs(childProperty, str + '.' + childProperty.name)
-                            }
-                        }
-                        else propertyArr.push(str)
-                    }
+                // if (item.properties && item.properties.length) {
+                //     var propertyArr = []
+                //     function propertyDfs(property, str) {
+                //         if (property.childProps && property.childProps.length) {
+                //             for (var j = 0; j < property.childProps.length; j++) {
+                //                 var childProperty = property.childProps[j]
+                //                 propertyDfs(childProperty, str + '.' + childProperty.name)
+                //             }
+                //         }
+                //         else propertyArr.push(str)
+                //     }
 
-                    for (var j = 0; j < item.properties.length; j++) {
-                        propertyDfs(item.properties[j], '')
-                    }
+                //     for (var j = 0; j < item.properties.length; j++) {
+                //         propertyDfs(item.properties[j], '')
+                //     }
 
-                    for (var j = 0; j < propertyArr.length; j++) {
-                        var propertyName = propertyArr[j].toLowerCase()
+                //     for (var j = 0; j < propertyArr.length; j++) {
+                //         var propertyName = propertyArr[j].toLowerCase()
 
-                        if (propertyName.indexOf('marker') !== -1) continue;
+                //         if (propertyName.indexOf('marker') !== -1) continue;
 
-                        isKeyframeExists = true
-                        break;
-                    }
-                }
+                //         isKeyframeExists = true
+                //         break;
+                //     }
+                // }
             }
         }
         cuts.sort(function (a, b) {
