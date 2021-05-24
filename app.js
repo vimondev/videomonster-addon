@@ -115,6 +115,8 @@ async function func() {
         console.log(data)
 
         try {
+            await global.ClearTask()
+            
             // 폰트 설치
             if (fsAsync.IsExistAsync(config.fontPath)) await fsAsync.UnlinkFolderRecursive(config.fontPath)
             await createFolder(config.fontPath)
@@ -160,6 +162,8 @@ async function func() {
         console.log(data)
 
         try {
+            await global.ClearTask()
+
             // 폰트 설치
             if (fsAsync.IsExistAsync(config.fontPath)) await fsAsync.UnlinkFolderRecursive(config.fontPath)
             await createFolder(config.fontPath)
