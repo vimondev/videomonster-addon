@@ -20,7 +20,6 @@ let GettyImagesPath
 let TemplateId
 let EditableData
 
-let isScriptRunning = false
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 function AccessAsync(path) {
@@ -90,9 +89,6 @@ exports.SetPath = (_Template_path, _Material_Json, _ReplaceSourcePath, _GettyIma
 exports.CreatePreviewImage = (imagePath) => {
     return new Promise(async (resolve, reject) => {
         try {
-            while (isScriptRunning) await sleep(1000)
-            isScriptRunning = true
-
             const homeDir = `${require('os').homedir()}/AppData`
             await fsAsync.UnlinkFolderRecursiveIgnoreError(`${homeDir}/Local/Temp`)
             await fsAsync.UnlinkFolderRecursiveIgnoreError(`${homeDir}/Roaming/Adobe/Common`)
@@ -130,19 +126,17 @@ exports.CreatePreviewImage = (imagePath) => {
             const child = execFile(`${aerenderPath}/AfterFX.com`, ['-r', scriptPath, '-noui'])
 
             const startTime = Date.now()
+
             let isStucked = false
+            let interval
             function CheckAfterFXStuck() {
-                if (isScriptRunning) {
-                    if (Date.now() - startTime > 1000 * 60 * 10) {
-                        ClearTask().catch(() => {})
-                        isScriptRunning = false
-                        isStucked = true
-                        reject()
-                    }
-                    setTimeout(CheckAfterFXStuck, 1000)
+                if (Date.now() - startTime > 1000 * 60 * 9) {
+                    ClearTask().catch(() => {})
+                    isStucked = true
+                    reject(new Error())
+                    if (interval) clearInterval(interval)
                 }
             }
-            CheckAfterFXStuck()
 
             child.stdout.on('data', data => {
                 ae_log += String(data)
@@ -157,7 +151,8 @@ exports.CreatePreviewImage = (imagePath) => {
             child.on('close', async code => {                
                 try {
                     if (!isStucked) {
-                        isScriptRunning = false
+                        if (interval) clearInterval(interval)
+
                         if (imagePath) {
                             if (await AccessAsync(imagePath)) {
                                 const files = await retry(ReadDirAsync(imagePath))
@@ -192,9 +187,11 @@ exports.CreatePreviewImage = (imagePath) => {
                     reject(e)
                 }
             })
+
+            await sleep(10000)
+            interval = setInterval(CheckAfterFXStuck, 1000)
         }
         catch (e) {
-            isScriptRunning = false
             console.log(e)
             reject(e)
         }
@@ -205,9 +202,6 @@ exports.CreatePreviewImage = (imagePath) => {
 exports.MaterialParse = (imagePath) => {
     return new Promise(async (resolve, reject) => {
         try {
-            while (isScriptRunning) await sleep(1000)
-            isScriptRunning = true
-
             const homeDir = `${require('os').homedir()}/AppData`
             await fsAsync.UnlinkFolderRecursiveIgnoreError(`${homeDir}/Local/Temp`)
             await fsAsync.UnlinkFolderRecursiveIgnoreError(`${homeDir}/Roaming/Adobe/Common`)
@@ -247,18 +241,15 @@ exports.MaterialParse = (imagePath) => {
             const startTime = Date.now()
             
             let isStucked = false
+            let interval
             function CheckAfterFXStuck() {
-                if (isScriptRunning) {
-                    if (Date.now() - startTime > 1000 * 60 * 10) {
-                        ClearTask().catch(() => {})
-                        isScriptRunning = false
-                        isStucked = true
-                        reject()
-                    }
-                    setTimeout(CheckAfterFXStuck, 1000)
+                if (Date.now() - startTime > 1000 * 60 * 9) {
+                    ClearTask().catch(() => {})
+                    isStucked = true
+                    reject(new Error())
+                    if (interval) clearInterval(interval)
                 }
             }
-            CheckAfterFXStuck()
 
             child.stdout.on('data', data => {
                 ae_log += String(data)
@@ -273,7 +264,8 @@ exports.MaterialParse = (imagePath) => {
             child.on('close', async code => {
                 try {
                     if (!isStucked) {
-                        isScriptRunning = false
+                        if (interval) clearInterval(interval)
+
                         if (imagePath) {
                             if (await AccessAsync(imagePath)) {
                                 const files = await retry(ReadDirAsync(imagePath))
@@ -308,9 +300,11 @@ exports.MaterialParse = (imagePath) => {
                     reject(e)
                 }
             })
+
+            await sleep(10000)
+            interval = setInterval(CheckAfterFXStuck, 1000)
         }
         catch (e) {
-            isScriptRunning = false
             console.log(e)
             reject(e)
         }

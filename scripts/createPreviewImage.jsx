@@ -212,7 +212,7 @@ function ParseMaterial() {
                     if (textLayer.name === '@Source') {
                         var orgValue = textLayer.text.sourceText.value;
                         var orgWidth = comp.width;//textLayer.sourceRectAtTime(0,false).width;    
-                        orgValue.text = text.Context;
+                        orgValue.text = text.Context || '';
                         textLayer.text.sourceText.setValue(orgValue);
                         var decressDelta = 0.5;
 
