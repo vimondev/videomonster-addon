@@ -1326,7 +1326,7 @@ function SlideCopyAndStretch(targetComp, data, material) {
                 addDurationToLayers(newCutData, copyAdditionalDuration, true)
             }
         }
-        if (copyMap[compName]) copyAdditionalDuration -= 1 / 60
+        if (Copy.length > 0) copyAdditionalDuration -= 1 / 60
     }
 
     function stretchToLayers(cutData, stretch) {
