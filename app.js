@@ -121,8 +121,9 @@ async function func() {
     if(!renderServerIp) console.log(`[Error] RenderServerIp not found.`)
 
     const rendererid = await CreateAndReadToken()
+    const isStaticMachine = process.env.IS_STATIC_MACHINE === 'true'
 
-    console.log(`start! / rendererid(${rendererid}) / targetServerIp(${renderServerIp})`)
+    console.log(`RendererId(${rendererid}) IsStaticMachine(${isStaticMachine}) TargetServer(${renderServerIp})`)
     
     const socket = require(`socket.io-client`)(renderServerIp, {
         transports: [`websocket`]
@@ -130,9 +131,14 @@ async function func() {
 
     // branch test
     socket.on(`connect`, () => {
+        const data = {
+            type: 'imageclient',
+            rendererid,
+            isStaticMachine
+        }
         console.log(`Connected!`)
-        console.log(`imageclient`)
-        socket.emit(`regist`, { type:`imageclient`, rendererid })
+        console.log(data)
+        socket.emit(`regist`, data)
     })
 
     socket.on(`disconnect`, () => {
