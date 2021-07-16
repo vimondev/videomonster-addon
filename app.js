@@ -6,40 +6,44 @@ async function func() {
     const fsAsync = require(`./modules/fsAsync`)
     const { v4: uuid } = require('uuid')
     const git = require('simple-git')()
+    require('dotenv').config()
   
     async function GetTargetRenderServerIp() {
-      try {
-        const { current } = await git.status()
-        switch(current) {
-        
-          case 'master': return 'http://10.0.0.7:3000'
-          case 'dev': return 'http://10.0.0.19:3000'
-          case 'staticmachine': return 'http://videomonsterdevs.koreacentral.cloudapp.azure.com:3000'
-  
-          default: 
-            console.log(`[ERROR] Target Server Ip is null. (Branch : ${current})`)
-            return null
+        try {
+          const isStaticMachine = process.env.IS_STATIC_MACHINE === 'true'
+          const { current } = await git.status()
+          switch(current) {
+            case 'master':
+              if (isStaticMachine) return 'http://videomonsterdevs.koreacentral.cloudapp.azure.com:3000'
+              return 'http://10.0.0.7:3000'
+            case 'dev':
+              if (isStaticMachine) return 'http://videomonsterdevs.koreacentral.cloudapp.azure.com:3000'
+              return 'http://10.0.0.19:3000'
+
+            default: 
+              console.log(`[ERROR] Target Server Ip is null. (Branch : ${current})`)
+              return null
+          }
         }
-      }
-      catch (e) {
-        console.log(e)
-        return null
-      }
+        catch (e) {
+          console.log(e)
+          return null
+        }
     }
     
     async function CreateAndReadToken() {
-      try {
-        const tokenPath = 'C:/Users/Public/token.txt'
-        if(!await fsAsync.IsExistAsync(tokenPath)) {
+        try {
+            const tokenPath = 'C:/Users/Public/token.txt'
+            if(!await fsAsync.IsExistAsync(tokenPath)) {
+                await fsAsync.WriteFileAsync(tokenPath, uuid())
+            }
+            const token = await fsAsync.ReadFileAsync(tokenPath)
+            return String(token)
         }
-        await fsAsync.WriteFileAsync(tokenPath, uuid())
-        const token = await fsAsync.ReadFileAsync(tokenPath)
-        return String(token)
-      }
-      catch(e) {
-        console.log(e)
-        return ""
-      }
+        catch(e) {
+            console.log(e)
+            return ""
+        }
     }
 
     function AccessAsync(path) {
