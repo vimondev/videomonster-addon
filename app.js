@@ -103,8 +103,6 @@ async function func() {
     const rendererid = await CreateAndReadToken()
 
     console.log(`start! / rendererid(${rendererid}) / targetServerIp(${renderServerIp})`)
-
-    await DeleteMediaCache()
     
     const socket = require(`socket.io-client`)(renderServerIp, {
         transports: [`websocket`]
