@@ -1,5 +1,50 @@
 async function func() {
     const fs = require(`fs`)
+    const config = require(`./config`)
+    const global = require(`./global`)
+    const scriptExecutor = require(`./modules/scriptExecutor`)
+    const fsAsync = require(`./modules/fsAsync`)
+    const { v4: uuid } = require('uuid')
+    const git = require('simple-git')()
+    require('dotenv').config()
+  
+    async function GetTargetRenderServerIp() {
+        try {
+          const isStaticMachine = process.env.IS_STATIC_MACHINE === 'true'
+          const { current } = await git.status()
+          switch(current) {
+            case 'master':
+              if (isStaticMachine) return 'http://vmclientstage.koreacentral.cloudapp.azure.com:3000'
+              return 'http://10.0.0.7:3000'
+            case 'dev':
+              if (isStaticMachine) return 'http://videomonsterdevs.koreacentral.cloudapp.azure.com:3000'
+              return 'http://10.0.0.19:3000'
+
+            default: 
+              console.log(`[ERROR] Target Server Ip is null. (Branch : ${current})`)
+              return null
+          }
+        }
+        catch (e) {
+          console.log(e)
+          return null
+        }
+    }
+    
+    async function CreateAndReadToken() {
+        try {
+            const tokenPath = 'C:/Users/Public/token.txt'
+            if(!await fsAsync.IsExistAsync(tokenPath)) {
+                await fsAsync.WriteFileAsync(tokenPath, uuid())
+            }
+            const token = await fsAsync.ReadFileAsync(tokenPath)
+            return String(token)
+        }
+        catch(e) {
+            console.log(e)
+            return ""
+        }
+    }
 
     function AccessAsync(path) {
         return new Promise((resolve, reject) => {
@@ -48,27 +93,32 @@ async function func() {
         }
     }
 
-    const config = require(`./config`)
-    const global = require(`./global`)
-    const fsAsync = require(`./modules/fsAsync`)
-    const scriptExecutor = require(`./modules/scriptExecutor`)
-
     // 이미지 렌더링 수행중?
     let isImageRendering = false
     let isMaterialParsing = false
 
-    console.log(`start!`)
+    let renderServerIp = await GetTargetRenderServerIp()
+    if(!renderServerIp) console.log(`[Error] RenderServerIp not found.`)
 
-    const socket = require(`socket.io-client`)(`http://10.0.0.7:3000`, {
+    const rendererid = await CreateAndReadToken()
+    const isStaticMachine = process.env.IS_STATIC_MACHINE === 'true'
+
+    console.log(`RendererId(${rendererid}) IsStaticMachine(${isStaticMachine}) TargetServer(${renderServerIp})`)
+    
+    const socket = require(`socket.io-client`)(renderServerIp, {
         transports: [`websocket`]
     })
 
     // branch test
-
     socket.on(`connect`, () => {
+        const data = {
+            type: 'imageclient',
+            rendererid,
+            isStaticMachine
+        }
         console.log(`Connected!`)
-        console.log(`imageclient`)
-        socket.emit(`regist`, `imageclient`)
+        console.log(data)
+        socket.emit(`regist`, data)
     })
 
     socket.on(`disconnect`, () => {
