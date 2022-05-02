@@ -11,10 +11,13 @@ async function func() {
     async function GetTargetRenderServerIp() {
         try {
           const isStaticMachine = process.env.IS_STATIC_MACHINE === 'true'
+          const region = process.env.REGION
+
           const { current } = await git.status()
           switch(current) {
             case 'master':
             //   if (isStaticMachine) 
+              if (region === 'US') return 'http://vmclientusstage.eastus.cloudapp.azure.com:3000'
               return 'http://vmclientstage.koreacentral.cloudapp.azure.com:3000'
             //   return 'http://10.0.0.7:3000'
             case 'dev':
@@ -170,7 +173,7 @@ async function func() {
             await global.ClearTask()
             
             // 폰트 설치
-            if (fsAsync.IsExistAsync(config.fontPath)) await fsAsync.UnlinkFolderRecursive(config.fontPath)
+            if (await fsAsync.IsExistAsync(config.fontPath)) await fsAsync.UnlinkFolderRecursive(config.fontPath)
             await createFolder(config.fontPath)
 
             await global.InstallFont(fontPath)
@@ -217,7 +220,7 @@ async function func() {
             await global.ClearTask()
 
             // 폰트 설치
-            if (fsAsync.IsExistAsync(config.fontPath)) await fsAsync.UnlinkFolderRecursive(config.fontPath)
+            if (await fsAsync.IsExistAsync(config.fontPath)) await fsAsync.UnlinkFolderRecursive(config.fontPath)
             await createFolder(config.fontPath)
             
             await global.InstallFont(fontPath)
