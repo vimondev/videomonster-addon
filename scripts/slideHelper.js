@@ -714,7 +714,7 @@ function SlideCopyAndStretch(targetComp, data, material) {
     var copyMap = {}
     for (var i = 0; i < Copy.length; i++) {
         var item = Copy[i]
-        item.Count = Math.min(2, item.Count)
+        if (removeMap[item.Composition]) continue;
 
         copyMap[item.Composition] = item.Count
 
@@ -732,7 +732,8 @@ function SlideCopyAndStretch(targetComp, data, material) {
     var stretchMap = {}
     for (var i = 0; i < Stretch.length; i++) {
         var item = Stretch[i]
-        item.Stretch = Math.min(200, item.Stretch)
+        if (removeMap[item.Composition]) continue;
+
         item.Stretch = Math.max(50, item.Stretch)
         
         stretchMap[item.Composition] = item.Stretch
@@ -834,6 +835,8 @@ function SlideCopyAndStretch(targetComp, data, material) {
 
         originalCutMap[compName] = {
             cut: cutLayer,
+            inPoint: cut.inPoint,
+            outPoint: cut.outPoint,
             trackMattes: originTrackMattes,
             transitions: originTransitions,
             originCutIndex: originCutIndex,
@@ -1229,12 +1232,20 @@ function SlideCopyAndStretch(targetComp, data, material) {
     }
 
     var removeAdditionalDuration = 0
+    var removedIndexes = {}
     for (var i = 0; i < data.cuts.length; i++) {
         var cut = data.cuts[i]
         var compName = cut.name
         
         var cutData = originalCutMap[compName]
         addDurationToLayers(cutData, removeAdditionalDuration, false)
+        
+        for (var j = 1; j <= copyMap[compName]; j++) {
+            var newCompName = compName + '-' + j
+            var newCutData = copiedNewCutMap[newCompName]
+
+            addDurationToLayers(newCutData, removeAdditionalDuration, false)
+        }
 
         if (removeMap[compName]) {
             var beforeCut = data.cuts[i - 1]
@@ -1245,22 +1256,31 @@ function SlideCopyAndStretch(targetComp, data, material) {
             var nextCutLayer = nextCut ? originalCutMap[nextCut.name].cut : null
 
             if (beforeCutLayer && nextCutLayer) {
-                removeAdditionalDuration -= (nextCutLayer.inPoint - beforeCutLayer.outPoint + nextCut.beforeCutOverlapDuration)
+                removeAdditionalDuration -= (nextCut.inPoint - beforeCut.outPoint + nextCut.beforeCutOverlapDuration)
             }
+            // Fiert cut
             else if (nextCutLayer) {
-                removeAdditionalDuration -= ((nextCutLayer.inPoint + removeAdditionalDuration) - cutLayer.inPoint)
+                removeAdditionalDuration -= (nextCut.inPoint - cut.inPoint)
             }
+            // Last cut
             else if (beforeCutLayer) {
-                removeAdditionalDuration -= (cutLayer.outPoint - beforeCutLayer.outPoint)
+                removeAdditionalDuration -= (cut.outPoint - beforeCut.outPoint)
             }
             else continue;
 
             removeLayers(cutData)
-            data.cuts.splice(i, 1)
             removeAdditionalDuration -= 1 / 60
-            i--
+            removedIndexes[i] = true
         }
     }
+
+    var newCuts = []
+    for (var i = 0; i < data.cuts.length; i++) {
+        if (!removedIndexes[i]) {
+            newCuts.push(data.cuts[i])
+        }
+    }
+    data.cuts = newCuts
 
     var copyAdditionalDuration = 0
     var isCopiedMap = {}
