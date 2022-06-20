@@ -714,7 +714,6 @@ function SlideCopyAndStretch(targetComp, data, material) {
     var copyMap = {}
     for (var i = 0; i < Copy.length; i++) {
         var item = Copy[i]
-        item.Count = Math.min(2, item.Count)
 
         copyMap[item.Composition] = item.Count
 
@@ -732,7 +731,6 @@ function SlideCopyAndStretch(targetComp, data, material) {
     var stretchMap = {}
     for (var i = 0; i < Stretch.length; i++) {
         var item = Stretch[i]
-        item.Stretch = Math.min(200, item.Stretch)
         item.Stretch = Math.max(50, item.Stretch)
         
         stretchMap[item.Composition] = item.Stretch
