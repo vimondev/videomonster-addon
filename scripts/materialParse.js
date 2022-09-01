@@ -17,6 +17,16 @@ var projFile = new File(projectPath);
 var prj = app.open(projFile);
 prj.expressionEngine = 'javascript-1.0';
 
+var log = [];
+function SaveLog(path, filename) {
+    var l = JSON.stringify(log);
+    var JFile = new File(path + filename);
+    writeFile(JFile, l);
+}
+function Logging(message) {
+    if (message) log.push(message);
+}
+
 ParseMaterial();
 
 function ParseMaterial() {
@@ -54,7 +64,7 @@ function ParseMaterial() {
                     var stretchMaterialMap = {}
                     for (var j = 0; j < material.Stretch.length; j++) {
                         var item = material.Stretch[j]
-                        item.Stretch = Math.min(200, item.Stretch)
+                        // item.Stretch = Math.min(200, item.Stretch)
                         item.Stretch = Math.max(50, item.Stretch)
                         
                         stretchMaterialMap[item.Composition] = item.Stretch
@@ -108,9 +118,15 @@ function ParseMaterial() {
         }
     }
 
+    var isReplacedItemMap = {}
     var footageItemObjectMap = {}
     for (var i = 1; i <= prj.numItems; i++) {
         if (prj.item(i) instanceof CompItem && footageMaterialMap.hasOwnProperty(prj.items[i].name)) {
+
+            // #AV CompItem이 두번씩 호출되면서 @Source의 inPoint-outPoint가 잘못입력되는 문제가 발생함
+            if (isReplacedItemMap[prj.items[i].name]) continue;
+            isReplacedItemMap[prj.items[i].name] = true;
+
             var footage = footageMaterialMap[prj.items[i].name];
             var comp = prj.item(i);
             var sourceLayer = comp.layer('@Source');
@@ -164,7 +180,17 @@ function ParseMaterial() {
                     sourceLayer.inPoint = startTime;
                     sourceLayer.startTime = -startTime;
 
-                    // //sourceLayer.outPoint = comp.workAreaDuration;
+                    var srcDuration = 0
+                    if (!isNaN(footage.Meta.from) && !isNaN(footage.Meta.to)) {
+                        srcDuration = footage.Meta.to - footage.Meta.from
+                    }
+                    else {
+                        // workAreaDuration은 부정확한 경우가 있기 때문에 이 분기로 빠지는 경우는 없어야함.
+                        // 영상 소스를 입력하면 무조건 Meta.from/to 값이 있음. 만약 없다면 프론트에서 값을 제대로 넣어주고 있는지 확인이 필요함.
+                        srcDuration = comp.workAreaDuration
+                    }
+
+                    sourceLayer.outPoint = sourceLayer.inPoint + srcDuration;
 
                     var sizeX = 100 * comp.width / sourceLayer.width;
                     var sizeY = 100 * comp.height / sourceLayer.height;
@@ -195,14 +221,18 @@ function ParseMaterial() {
                         var calculatedPercentage = footage.stretch / 100
                         var originInPoint = Number(sourceLayer.inPoint)
                         var originOutPoint = Number(sourceLayer.outPoint)
-
+                        
                         sourceLayer.stretch /= calculatedPercentage
+
+                        // stretch 값이 적용된 source의 Duration
+                        var stretchedSrcDuration = sourceLayer.outPoint - sourceLayer.inPoint
+
                         if (sourceLayer.inPoint !== originInPoint) {
                             sourceLayer.startTime -= (sourceLayer.inPoint - originInPoint)
                             sourceLayer.inPoint -= 0.05
                         }
                         if (sourceLayer.outPoint !== originOutPoint) {
-                            sourceLayer.outPoint = originOutPoint + 0.05
+                            sourceLayer.outPoint = sourceLayer.inPoint + stretchedSrcDuration + 0.05;
                         }
                     }
                 }
