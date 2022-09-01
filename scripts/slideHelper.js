@@ -714,7 +714,7 @@ function SlideCopyAndStretch(targetComp, data, material) {
     var copyMap = {}
     for (var i = 0; i < Copy.length; i++) {
         var item = Copy[i]
-        if (removeMap[item.Composition]) continue;
+        // item.Count = Math.min(2, item.Count)
 
         copyMap[item.Composition] = item.Count
 
@@ -732,8 +732,7 @@ function SlideCopyAndStretch(targetComp, data, material) {
     var stretchMap = {}
     for (var i = 0; i < Stretch.length; i++) {
         var item = Stretch[i]
-        if (removeMap[item.Composition]) continue;
-
+        // item.Stretch = Math.min(200, item.Stretch)
         item.Stretch = Math.max(50, item.Stretch)
         
         stretchMap[item.Composition] = item.Stretch
@@ -1231,6 +1230,7 @@ function SlideCopyAndStretch(targetComp, data, material) {
         cutLayer.remove()
     }
 
+    var removeCutInfos = []
     var removeAdditionalDuration = 0
     var removedIndexes = {}
     for (var i = 0; i < data.cuts.length; i++) {
@@ -1238,14 +1238,6 @@ function SlideCopyAndStretch(targetComp, data, material) {
         var compName = cut.name
         
         var cutData = originalCutMap[compName]
-        addDurationToLayers(cutData, removeAdditionalDuration, false)
-        
-        for (var j = 1; j <= copyMap[compName]; j++) {
-            var newCompName = compName + '-' + j
-            var newCutData = copiedNewCutMap[newCompName]
-
-            addDurationToLayers(newCutData, removeAdditionalDuration, false)
-        }
 
         if (removeMap[compName]) {
             var beforeCut = data.cuts[i - 1]
@@ -1268,20 +1260,63 @@ function SlideCopyAndStretch(targetComp, data, material) {
             }
             else continue;
 
-            removeLayers(cutData)
             removeAdditionalDuration -= 1 / 60
-            removedIndexes[i] = true
+            
+            removeCutInfos.push({ 
+                isRemove: true,
+                cutData: cutData, 
+                idx: i,
+                addDuration: removeAdditionalDuration
+            })
+
+            for (var j = 1; j <= copyMap[compName]; j++) {
+                var newCompName = compName + '-' + j
+                var newCutData = copiedNewCutMap[newCompName]
+                removeCutInfos.push({ 
+                    isRemove: false,
+                    cutData: newCutData, 
+                    idx: -1,
+                    addDuration: removeAdditionalDuration
+                })
+            }
+            // i--
+        }
+        else {
+            removeCutInfos.push({ 
+                isRemove: false,
+                cutData: cutData, 
+                idx: i,
+                addDuration: removeAdditionalDuration
+            })
+            
+            for (var j = 1; j <= copyMap[compName]; j++) {
+                var newCompName = compName + '-' + j
+                var newCutData = copiedNewCutMap[newCompName]
+                removeCutInfos.push({ 
+                    isRemove: false,
+                    cutData: newCutData, 
+                    idx: -1,
+                    addDuration: removeAdditionalDuration
+                })
+            }
         }
     }
-
-    var newCuts = []
-    for (var i = 0; i < data.cuts.length; i++) {
-        if (!removedIndexes[i]) {
-            newCuts.push(data.cuts[i])
+    for (var i = removeCutInfos.length - 1; i >= 0; --i) {
+        var isRemove = removeCutInfos[i].isRemove
+        var cutData = removeCutInfos[i].cutData
+        var idx = removeCutInfos[i].idx
+        var addDuration = removeCutInfos[i].addDuration
+        if (isRemove) {
+            removeLayers(cutData)
+            data.cuts.splice(idx, 1)
+        }
+        else {
+            addDurationToLayers(cutData, addDuration, false)
         }
     }
     data.cuts = newCuts
 
+    var copyCutInfos = []
     var copyAdditionalDuration = 0
     var isCopiedMap = {}
     for (var i = 0; i < data.cuts.length; i++) {
@@ -1306,14 +1341,23 @@ function SlideCopyAndStretch(targetComp, data, material) {
                 isCopiedMap[groupCompName] = true
                 var cutData = originalCutMap[groupCompName]
 
-                addDurationToLayers(cutData, copyAdditionalDuration, true)
+                copyCutInfos.push({
+                    cutData: cutData,
+                    addDuration: copyAdditionalDuration,
+                    isSort: true
+                })
                 originGroupCutDatas.push(cutData)
 
                 for (var j = 1; j <= copyMap[groupCompName]; j++) {
                     var newCompName = groupCompName + '-' + j
                     var newCutData = copiedNewCutMap[newCompName]
-
-                    addDurationToLayers(newCutData, copyAdditionalDuration + newGroupLayerAdditionalDuration * j, true)
+                    var _copyAdditionalDuration = copyAdditionalDuration + newGroupLayerAdditionalDuration * j
+                    
+                    copyCutInfos.push({
+                        cutData: newCutData,
+                        addDuration: _copyAdditionalDuration,
+                        isSort: true
+                    })
 
                     if (!newGroupCutDatas[j]) newGroupCutDatas[j] = []
                     newGroupCutDatas[j].push(newCutData)
@@ -1333,7 +1377,11 @@ function SlideCopyAndStretch(targetComp, data, material) {
             var nextCutOverlapDuration = cutData.nextCutOverlapDuration
             var beforeCutOverlapDuration = cutData.beforeCutOverlapDuration
 
-            addDurationToLayers(cutData, copyAdditionalDuration, true)
+            copyCutInfos.push({
+                cutData: cutData,
+                addDuration: copyAdditionalDuration,
+                isSort: true
+            })
 
             for (var j = 1; j <= copyMap[compName]; j++) {
                 var newCompName = compName + '-' + j
@@ -1343,10 +1391,20 @@ function SlideCopyAndStretch(targetComp, data, material) {
                 else if (!isNaN(beforeCutOverlapDuration)) copyAdditionalDuration += beforeCutOverlapDuration
                 copyAdditionalDuration += (cutLayer.outPoint - cutLayer.inPoint) - (1 / 60)
 
-                addDurationToLayers(newCutData, copyAdditionalDuration, true)
+                copyCutInfos.push({
+                    cutData: newCutData,
+                    addDuration: copyAdditionalDuration,
+                    isSort: true
+                })    
             }
         }
         if (Copy.length > 0) copyAdditionalDuration -= 1 / 60
+    }
+    for (var i = copyCutInfos.length - 1; i >= 0; --i) {
+        var cutData = copyCutInfos[i].cutData
+        var addDuration = copyCutInfos[i].addDuration
+        var isSort = copyCutInfos[i].isSort
+        addDurationToLayers(cutData, addDuration, isSort)
     }
 
     function stretchToLayers(cutData, stretch) {
