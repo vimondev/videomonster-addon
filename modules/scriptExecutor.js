@@ -93,8 +93,6 @@ exports.CreatePreviewImage = (imagePath) => {
             await fsAsync.UnlinkFolderRecursiveIgnoreError(`${homeDir}/Local/Temp`)
             await fsAsync.UnlinkFolderRecursiveIgnoreError(`${homeDir}/Roaming/Adobe/Common`)
 
-            console.log(`[ ----- DEBUG ----- ] CreatePreviewImage / Unlink Temp Files`)
-            
             let ae_log = ``
 
             // 기존 파일 제거
@@ -110,8 +108,6 @@ exports.CreatePreviewImage = (imagePath) => {
             // 기존에 생성된 폴더가 없을 경우 생성
             else await MkdirAsync(localPath)
 
-            console.log(`[ ----- DEBUG ----- ] CreatePreviewImage / Unlink or Mkdir ${localPath}`)
-
             // 스크립트 로드 & Replace
             let script = io.FileInfo.readAllText(`${ScriptRoot_path}/createPreviewImage.jsx`)
             script = script.replace('${ProjectPath}', Template_path);
@@ -125,8 +121,6 @@ exports.CreatePreviewImage = (imagePath) => {
             
             const scriptPath = `${require('os').homedir()}/aescript.js`
             await fsAsync.WriteFileAsync(scriptPath, script)
-
-            console.log(`[ ----- DEBUG ----- ] CreatePreviewImage / WriteFile aescript.js`)
 
             // 이미지 렌더링 시작
             const child = execFile(`${aerenderPath}/AfterFX.com`, ['-r', scriptPath, '-noui'])
@@ -156,8 +150,6 @@ exports.CreatePreviewImage = (imagePath) => {
 
             child.on('close', async code => {                
                 try {
-                    console.log(`[ ----- DEBUG ----- ] CreatePreviewImage / Finish AfterFx.com - 1 (${isStucked})`)
-
                     if (!isStucked) {
                         if (interval) clearInterval(interval)
 
@@ -172,8 +164,6 @@ exports.CreatePreviewImage = (imagePath) => {
                             }
                             else await retry(MkdirAsync(imagePath))
                         }
-
-                        console.log(`[ ----- DEBUG ----- ] CreatePreviewImage / Finish AfterFx.com - 2`)
 
                         // 렌더링이 완료된 파일을 찾는다. (localPath에 저장됨.)
                         const files = await retry(ReadDirAsync(localPath))
@@ -216,6 +206,8 @@ exports.MaterialParse = (imagePath) => {
             await fsAsync.UnlinkFolderRecursiveIgnoreError(`${homeDir}/Local/Temp`)
             await fsAsync.UnlinkFolderRecursiveIgnoreError(`${homeDir}/Roaming/Adobe/Common`)
 
+            console.log(`[ ----- DEBUG ----- ] MaterialParse / Unlink Temp Files`)
+            
             let ae_log = ``
 
             // 기존 파일 제거
@@ -231,6 +223,8 @@ exports.MaterialParse = (imagePath) => {
             // 기존에 생성된 폴더가 없을 경우 생성
             else await MkdirAsync(localPath)
 
+            console.log(`[ ----- DEBUG ----- ] MaterialParse / Unlink or Mkdir ${localPath}`)
+
             // 스크립트 로드 & Replace
             let script = io.FileInfo.readAllText(`${ScriptRoot_path}/materialParse.js`)
             script = script.replace('${ProjectPath}', Template_path);
@@ -244,6 +238,8 @@ exports.MaterialParse = (imagePath) => {
             
             const scriptPath = `${require('os').homedir()}/aescript.js`
             await fsAsync.WriteFileAsync(scriptPath, script)
+
+            console.log(`[ ----- DEBUG ----- ] MaterialParse / WriteFile aescript.js`)
 
             // 이미지 렌더링 시작
             const child = execFile(`${aerenderPath}/AfterFX.com`, ['-r', scriptPath, '-noui'])
@@ -273,6 +269,8 @@ exports.MaterialParse = (imagePath) => {
 
             child.on('close', async code => {
                 try {
+                    console.log(`[ ----- DEBUG ----- ] MaterialParse / Finish AfterFx.com - 1 (${isStucked})`)
+
                     if (!isStucked) {
                         if (interval) clearInterval(interval)
 
@@ -288,6 +286,8 @@ exports.MaterialParse = (imagePath) => {
                             else await retry(MkdirAsync(imagePath))
                         }
     
+                        console.log(`[ ----- DEBUG ----- ] MaterialParse / Finish AfterFx.com - 2`)
+
                         // 렌더링이 완료된 파일을 찾는다. (localPath에 저장됨.)
                         const files = await retry(ReadDirAsync(localPath))
                         for (let i=0; i<files.length; i++) {

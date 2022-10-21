@@ -179,18 +179,12 @@ async function func() {
             await global.InstallFont(fontPath)
             if (typeof installFontMap === 'object') await global.InstallGlobalFont(installFontMap)
 
-            console.log(`[ ----- DEBUG ----- ] ScriptExecutor SetPath`)
-
             // Path 설정 후 렌더링
             scriptExecutor.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId, EditableData)
             const ae_log = await scriptExecutor.CreatePreviewImage(imagePath)
 
-            console.log(`[ ----- DEBUG ----- ] Finish CreatePreviewImage`)
-
             await fsAsync.WriteFileAsync(`${imagePath}/ae_log.txt`, ae_log)
 
-            console.log(`[ ----- DEBUG ----- ] WriteFile ae_log.txt`)
-            
             socket.emit(`image_render_completed`, {
                 ae_log,
                 errCode: null
@@ -232,12 +226,18 @@ async function func() {
             await global.InstallFont(fontPath)
             if (typeof installFontMap === 'object') await global.InstallGlobalFont(installFontMap)
 
+            console.log(`[ ----- DEBUG ----- ] material_parse_start SetPath`)
+
             // Path 설정 후 렌더링
             scriptExecutor.SetPath(Template_path, Material_Json, ReplaceSourcePath, gettyImagesPath, TemplateId, EditableData)
             const ae_log = await scriptExecutor.MaterialParse(imagePath)
 
+            console.log(`[ ----- DEBUG ----- ] Finish MaterialParse`)
+
             await fsAsync.WriteFileAsync(`${imagePath}/ae_log.txt`, ae_log)
 
+            console.log(`[ ----- DEBUG ----- ] WriteFile ae_log.txt`)
+            
             socket.emit(`material_parse_completed`, {
                 ae_log,
                 errCode: null
