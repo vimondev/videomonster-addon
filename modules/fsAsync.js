@@ -171,10 +171,10 @@ const UnlinkFolderRecursiveIgnoreError = (path) => {
                 await RemoveDirAsync(path)
             }
             catch (e) {}
-            resolve()
         }
         catch (e) {
         }
+        resolve()
     })
 }
 exports.UnlinkFolderRecursiveIgnoreError = UnlinkFolderRecursiveIgnoreError
