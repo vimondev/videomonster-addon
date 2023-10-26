@@ -4,6 +4,6 @@ const PROGRAM_PATH = 'C:/Program Files'
 module.exports = {
     localPath: `${DOCUMENTS_PATH}/result`,
   
-    aerenderPath: `${PROGRAM_PATH}/Adobe/Adobe After Effects 2021/Support Files`,
+    aerenderPath: `${PROGRAM_PATH}/Adobe/Adobe After Effects 2023/Support Files`,
     fontPath: `${PROGRAM_PATH}/Common Files/Adobe/Fonts`
 }
